@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
-
-const API = "http://localhost:5000/api";
+const API = import.meta.env.https://school-backend-production-feb5.up.railway.app/api || "http://localhost:5000/api";
 
 const api = axios.create({ baseURL: API });
 api.interceptors.request.use((config) => {
