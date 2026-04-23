@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const BASE = API.replace("/api", "");
 
 const api = axios.create({ baseURL: API });
 api.interceptors.request.use((config) => {
@@ -126,17 +127,17 @@ export default function App() {
             </div>
           </div>
         </div>
-        <nav style={{ flex: 1, padding: "12px 8px" }}>
+        <nav style={{ flex: 1, padding: "12px 8px", overflowY: "auto" }}>
           {[
-            { id: "dashboard", label: "Dashboard",    icon: "📊" },
-            { id: "students",  label: "Students",     icon: "👩‍🎓" },
-            { id: "fees",      label: "Fee Records",  icon: "💰" },
-            { id: "academics", label: "Academics",    icon: "📚" },
-            { id: "health",    label: "Health Alerts",icon: "🏥" },
-            { id: "marks",     label: "Enter Marks",  icon: "✏️" },
-            { id: "staff",     label: "Staff Accounts",icon: "👨‍🏫" },
-            { id: "attendance", label: "Attendance", icon: "📅" },
-            {id:  "feestructure", label: "Fees Structure",icon: "🏷️"},
+            { id: "dashboard",    label: "Dashboard",     icon: "📊" },
+            { id: "students",     label: "Students",      icon: "👩‍🎓" },
+            { id: "fees",         label: "Fee Records",   icon: "💰" },
+            { id: "feestructure", label: "Fee Structure", icon: "🏷️" },
+            { id: "academics",    label: "Academics",     icon: "📚" },
+            { id: "health",       label: "Health Alerts", icon: "🏥" },
+            { id: "marks",        label: "Enter Marks",   icon: "✏️" },
+            { id: "attendance",   label: "Attendance",    icon: "📅" },
+            { id: "staff",        label: "Staff Accounts",icon: "👨‍🏫" },
           ].map(item => {
             const active = page === item.id || (item.id === "students" && page === "student");
             return (
@@ -157,16 +158,16 @@ export default function App() {
         <header style={{ background: "white", padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: "0 1px 10px rgba(0,0,0,0.08)", flexShrink: 0, borderBottom: "3px solid #f59e0b" }}>
           <div>
             <h1 style={{ margin: 0, fontSize: 20, color: "#064e3b", fontWeight: "bold" }}>
-              {page === "dashboard" && "📊 Dashboard"}
-              {page === "students"  && "👩‍🎓 Students"}
-              {page === "student"   && selectedStudent?.name}
-              {page === "fees"      && "💰 Fee Records"}
-              {page === "academics" && "📚 Academics"}
-              {page === "health"    && "🏥 Health Alerts"}
-              {page === "marks"     && "✏️ Enter Marks"}
-              {page === "staff"     && "👨‍🏫 Staff Accounts"}
-              {page === "attendance" && "📅 Attendance"}
+              {page === "dashboard"    && "📊 Dashboard"}
+              {page === "students"     && "👩‍🎓 Students"}
+              {page === "student"      && selectedStudent?.name}
+              {page === "fees"         && "💰 Fee Records"}
               {page === "feestructure" && "🏷️ Fee Structure"}
+              {page === "academics"    && "📚 Academics"}
+              {page === "health"       && "🏥 Health Alerts"}
+              {page === "marks"        && "✏️ Enter Marks"}
+              {page === "attendance"   && "📅 Attendance"}
+              {page === "staff"        && "👨‍🏫 Staff Accounts"}
             </h1>
             <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>
               {new Date().toLocaleDateString("en-KE", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
@@ -176,16 +177,16 @@ export default function App() {
         </header>
 
         <div style={{ flex: 1, padding: 24, overflow: "auto" }}>
-          {page === "dashboard" && <Dashboard stats={stats} students={students} feeSummary={feeSummary} openStudent={loadStudentDetails} />}
-          {page === "students"  && <Students students={filteredStudents} searchQuery={searchQuery} setSearchQuery={setSearchQuery} openStudent={loadStudentDetails} showAddStudent={showAddStudent} setShowAddStudent={setShowAddStudent} onAdd={async (form) => { try { await api.post("/students", form); showToast(`${form.name} registered!`); setShowAddStudent(false); loadStudents(); } catch(e) { showToast(e.response?.data?.message || "Failed to register", "error"); }}} />}
-          {page === "student"   && selectedStudent && <StudentProfile student={selectedStudent} tab={studentTab} setTab={setStudentTab} onBack={() => { setPage("students"); setSelectedStudent(null); }} showAddPayment={showAddPayment} setShowAddPayment={setShowAddPayment} onStudentUpdated={() => loadStudentDetails(selectedStudent.id)} onAddPayment={async (payment) => { try { await api.post("/fees/payment", { ...payment, student_id: selectedStudent.id }); showToast("Payment recorded!"); setShowAddPayment(false); loadStudentDetails(selectedStudent.id); loadFeeSummary(); } catch(e) { showToast(e.response?.data?.message || "Failed", "error"); }}} />}
-          {page === "fees"      && <FeeOverview students={students} feeSummary={feeSummary} openStudent={loadStudentDetails} />}
-          {page === "academics" && <Academics students={students} openStudent={loadStudentDetails} />}
-          {page === "health"    && <HealthAlerts openStudent={loadStudentDetails} showToast={showToast} />}
-          {page === "marks"     && <MarksEntry showToast={showToast} />}
-          {page === "staff"     && <StaffAccounts showToast={showToast} />}
-          {page === "attendance" && <Attendance showToast={showToast} />}
+          {page === "dashboard"    && <Dashboard stats={stats} students={students} feeSummary={feeSummary} openStudent={loadStudentDetails} />}
+          {page === "students"     && <Students students={filteredStudents} searchQuery={searchQuery} setSearchQuery={setSearchQuery} openStudent={loadStudentDetails} showAddStudent={showAddStudent} setShowAddStudent={setShowAddStudent} onAdd={async (form) => { try { await api.post("/students", form); showToast(`${form.name} registered!`); setShowAddStudent(false); loadStudents(); } catch(e) { showToast(e.response?.data?.message || "Failed to register", "error"); }}} />}
+          {page === "student"      && selectedStudent && <StudentProfile student={selectedStudent} tab={studentTab} setTab={setStudentTab} onBack={() => { setPage("students"); setSelectedStudent(null); }} showAddPayment={showAddPayment} setShowAddPayment={setShowAddPayment} onStudentUpdated={() => loadStudentDetails(selectedStudent.id)} onAddPayment={async (payment) => { try { await api.post("/fees/payment", { ...payment, student_id: selectedStudent.id }); showToast("Payment recorded!"); setShowAddPayment(false); loadStudentDetails(selectedStudent.id); loadFeeSummary(); } catch(e) { showToast(e.response?.data?.message || "Failed", "error"); }}} />}
+          {page === "fees"         && <FeeOverview students={students} feeSummary={feeSummary} openStudent={loadStudentDetails} />}
           {page === "feestructure" && <FeeStructure showToast={showToast} />}
+          {page === "academics"    && <Academics students={students} openStudent={loadStudentDetails} />}
+          {page === "health"       && <HealthAlerts openStudent={loadStudentDetails} showToast={showToast} />}
+          {page === "marks"        && <MarksEntry showToast={showToast} />}
+          {page === "attendance"   && <Attendance showToast={showToast} />}
+          {page === "staff"        && <StaffAccounts showToast={showToast} />}
         </div>
       </main>
 
@@ -239,7 +240,7 @@ function LoginPage({ onLogin, showToast }) {
           </button>
         </form>
         <div style={{ marginTop: 20, padding: 12, background: "#f0fdf4", borderRadius: 8, fontSize: 11, color: "#065f46", textAlign: "center" }}>
-          Default: admin@school.ac.ke / Admin@1234
+          admin@school.ac.ke / Admin@1234
         </div>
       </div>
     </div>
@@ -274,7 +275,7 @@ function Dashboard({ stats, students, feeSummary, openStudent }) {
             <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #f3f4f6", cursor: "pointer" }} onClick={() => openStudent(p.student_id)}>
               <div>
                 <div style={{ fontSize: 13, fontWeight: "bold" }}>{p.student_name}</div>
-                <div style={{ fontSize: 11, color: "#6b7280" }}>{p.term} · {p.payment_method} · {p.payment_date}</div>
+                <div style={{ fontSize: 11, color: "#6b7280" }}>{p.term} · {p.payment_method}</div>
               </div>
               <div style={{ fontSize: 14, fontWeight: "bold", color: "#064e3b" }}>{fmtKES(p.amount_paid)}</div>
             </div>
@@ -310,7 +311,7 @@ function Students({ students, searchQuery, setSearchQuery, openStudent, showAddS
     <div>
       <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
         <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search by name, admission no., or class..." style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 13, fontFamily: "inherit", outline: "none" }} />
-       <a href={`http://localhost:5000/api/students/export/excel?token=${localStorage.getItem('token')}&academic_year=2024`} target="_blank" style={{ background: "#16a34a", color: "white", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, cursor: "pointer", fontFamily: "inherit", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>📊 Export Excel</a>
+        <a href={`${BASE}/api/students/export/excel?token=${localStorage.getItem('token')}&academic_year=2024`} target="_blank" style={{ background: "#16a34a", color: "white", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, cursor: "pointer", fontFamily: "inherit", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>📊 Export Excel</a>
         <button onClick={() => setShowAddStudent(true)} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>+ Add Student</button>
       </div>
       <div style={{ background: "white", borderRadius: 12, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
@@ -365,7 +366,7 @@ function Students({ students, searchQuery, setSearchQuery, openStudent, showAddS
               <Field label="Emergency Contact" value={form.emergency_contact_phone} onChange={v => setForm({...form, emergency_contact_phone: v})} />
               <Field label="Allergies" value={form.allergies} onChange={v => setForm({...form, allergies: v})} placeholder="e.g. Peanuts (or None)" />
               <Field label="Chronic Conditions" value={form.chronic_conditions} onChange={v => setForm({...form, chronic_conditions: v})} placeholder="e.g. Asthma (or None)" />
-              <div style={{ gridColumn: "1/-1" }}><Field label="Medication / Special Notes" value={form.current_medication} onChange={v => setForm({...form, current_medication: v})} placeholder="e.g. Carries inhaler (or None)" /></div>
+              <div style={{ gridColumn: "1/-1" }}><Field label="Medication" value={form.current_medication} onChange={v => setForm({...form, current_medication: v})} placeholder="e.g. Carries inhaler (or None)" /></div>
             </div>
           </div>
           <div style={{ display: "flex", gap: 10, marginTop: 16, justifyContent: "flex-end" }}>
@@ -407,15 +408,17 @@ function StudentProfile({ student, tab, setTab, onBack, showAddPayment, setShowA
     }
   };
 
+  const tkn = localStorage.getItem('token');
+
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
         <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", color: "#064e3b", fontSize: 13, fontFamily: "inherit" }}>← Back to Students</button>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button onClick={() => setShowEdit(true)} style={{ background: "#f59e0b", color: "white", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>✏️ Edit Student</button>
-          <a href={`http://localhost:5000/api/reports/id-card/${student.id}?token=${localStorage.getItem('token')}`} target="_blank" style={{ background: "#7c3aed", color: "white", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 12, cursor: "pointer", textDecoration: "none", fontFamily: "inherit" }}>🪪 ID Card</a>
+          <a href={`${BASE}/api/reports/id-card/${student.id}?token=${tkn}`} target="_blank" style={{ background: "#7c3aed", color: "white", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 12, cursor: "pointer", textDecoration: "none", fontFamily: "inherit" }}>🪪 ID Card</a>
           {["Term 1 2024","Term 2 2024","Term 3 2024"].map(term => (
-            <a key={term} href={`http://localhost:5000/api/reports/report-card/${student.id}?term=${encodeURIComponent(term)}&academic_year=2024&token=${localStorage.getItem('token')}`} target="_blank" style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 12, cursor: "pointer", textDecoration: "none", fontFamily: "inherit" }}>📄 {term} Report</a>
+            <a key={term} href={`${BASE}/api/reports/report-card/${student.id}?term=${encodeURIComponent(term)}&academic_year=2024&token=${tkn}`} target="_blank" style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 12, cursor: "pointer", textDecoration: "none", fontFamily: "inherit" }}>📄 {term}</a>
           ))}
         </div>
       </div>
@@ -483,7 +486,7 @@ function StudentProfile({ student, tab, setTab, onBack, showAddPayment, setShowA
                       <td style={{ padding: "11px 14px", fontSize: 12, color: "#6b7280" }}>{f.reference_no}</td>
                       <td style={{ padding: "11px 14px", fontSize: 12, color: "#6b7280" }}>{f.payment_date ? f.payment_date.split("T")[0] : ""}</td>
                       <td style={{ padding: "11px 14px" }}>
-                        <a href={`http://localhost:5000/api/fees/receipt/${f.id}?token=${localStorage.getItem('token')}`} target="_blank" style={{ background: "#064e3b", color: "white", padding: "4px 10px", borderRadius: 6, fontSize: 11, textDecoration: "none" }}>🖨️ Receipt</a>
+                        <a href={`${BASE}/api/fees/receipt/${f.id}?token=${tkn}`} target="_blank" style={{ background: "#064e3b", color: "white", padding: "4px 10px", borderRadius: 6, fontSize: 11, textDecoration: "none" }}>🖨️ Receipt</a>
                       </td>
                     </tr>
                   );
@@ -508,17 +511,14 @@ function StudentProfile({ student, tab, setTab, onBack, showAddPayment, setShowA
                   return (
                     <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
                       <div style={{ fontSize: 11, fontWeight: "bold", color: color }}>{avg}%</div>
-                      <div title={a.subject_name + ": " + avg + "% (" + grade + ")"} style={{ width: "100%", height: barHeight, background: color, borderRadius: "4px 4px 0 0", minWidth: 24, cursor: "pointer", transition: "opacity 0.2s" }}
-                        onMouseEnter={e => e.target.style.opacity = "0.8"}
-                        onMouseLeave={e => e.target.style.opacity = "1"}
-                      />
-                      <div style={{ fontSize: 9, color: "#6b7280", textAlign: "center", lineHeight: 1.3, maxWidth: 52, wordBreak: "break-word" }}>{a.subject_name.length > 6 ? a.subject_name.split(" ")[0].substring(0, 7) : a.subject_name}</div>
+                      <div title={a.subject_name + ": " + avg + "% (" + grade + ")"} style={{ width: "100%", height: barHeight, background: color, borderRadius: "4px 4px 0 0", minWidth: 24, cursor: "pointer" }} />
+                      <div style={{ fontSize: 9, color: "#6b7280", textAlign: "center", maxWidth: 52, wordBreak: "break-word" }}>{a.subject_name.split(" ")[0].substring(0, 7)}</div>
                     </div>
                   );
                 })}
               </div>
               <div style={{ borderTop: "1px solid #e5e7eb", marginTop: 12, paddingTop: 12, display: "flex", gap: 16, flexWrap: "wrap" }}>
-                {[["A / A-","#16a34a"],["B+ / B / B-","#2563eb"],["C+ / C / C-","#d97706"],["D & Below","#dc2626"]].map(([label, color]) => (
+                {[["A/A-","#16a34a"],["B","#2563eb"],["C","#d97706"],["D & E","#dc2626"]].map(([label, color]) => (
                   <div key={label} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, color: "#6b7280" }}>
                     <div style={{ width: 12, height: 12, borderRadius: 2, background: color }} />{label}
                   </div>
@@ -564,7 +564,7 @@ function StudentProfile({ student, tab, setTab, onBack, showAddPayment, setShowA
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
           <InfoCard title="🩺 Health Details" items={[["Blood Group", student.health?.blood_group || "—"], ["Allergies", student.health?.allergies || "None"], ["Conditions", student.health?.chronic_conditions || "None"], ["Emergency Contact", student.health?.emergency_contact_phone || "—"]]} />
           <div style={{ background: student.health?.current_medication !== "None" ? "#fef3c7" : "white", borderRadius: 12, padding: 20, boxShadow: "0 2px 10px rgba(0,0,0,0.06)", border: student.health?.current_medication !== "None" ? "2px solid #f59e0b" : "none" }}>
-            <h4 style={{ margin: "0 0 12px", color: "#92400e", fontSize: 14 }}>💊 Medication & Instructions</h4>
+            <h4 style={{ margin: "0 0 12px", color: "#92400e", fontSize: 14 }}>💊 Medication</h4>
             <p style={{ margin: 0, fontSize: 13, color: "#374151", lineHeight: 1.7 }}>{student.health?.current_medication || "No special medication."}</p>
           </div>
         </div>
@@ -573,11 +573,11 @@ function StudentProfile({ student, tab, setTab, onBack, showAddPayment, setShowA
       {showAddPayment && (
         <Modal title="💰 Record Fee Payment" onClose={() => setShowAddPayment(false)}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <Field label="Term" value={payForm.term} onChange={v => setPayForm({...payForm, term: v})} placeholder="e.g. Term 1 2024" />
+            <Field label="Term" value={payForm.term} onChange={v => setPayForm({...payForm, term: v})} />
             <Field label="Amount Expected (KES)" type="number" value={payForm.amount_expected} onChange={v => setPayForm({...payForm, amount_expected: v})} />
             <Field label="Amount Paid (KES) *" type="number" value={payForm.amount_paid} onChange={v => setPayForm({...payForm, amount_paid: v})} />
             <SelectField label="Payment Method" value={payForm.payment_method} options={["M-Pesa","Cash","Bank","Cheque"]} onChange={v => setPayForm({...payForm, payment_method: v})} />
-            <Field label="Reference No." value={payForm.reference_no} onChange={v => setPayForm({...payForm, reference_no: v})} placeholder="M-Pesa code / bank ref" />
+            <Field label="Reference No." value={payForm.reference_no} onChange={v => setPayForm({...payForm, reference_no: v})} />
             <Field label="Payment Date" type="date" value={payForm.payment_date} onChange={v => setPayForm({...payForm, payment_date: v})} />
           </div>
           <div style={{ display: "flex", gap: 10, marginTop: 16, justifyContent: "flex-end" }}>
@@ -608,6 +608,145 @@ function StudentProfile({ student, tab, setTab, onBack, showAddPayment, setShowA
           <div style={{ display: "flex", gap: 10, marginTop: 16, justifyContent: "flex-end" }}>
             <button onClick={() => setShowEdit(false)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>Cancel</button>
             <button onClick={handleSaveEdit} disabled={saving} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>{saving ? "Saving..." : "✓ Save Changes"}</button>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+function FeeStructure({ showToast }) {
+  const [classes, setClasses] = useState([]);
+  const [structures, setStructures] = useState([]);
+  const [showAdd, setShowAdd] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [form, setForm] = useState({ class_id: "", term: "Term 1 2024", academic_year: "2024", tuition_fee: "", activity_fee: "", boarding_fee: "", other_fee: "" });
+  const terms = ["Term 1 2024", "Term 2 2024", "Term 3 2024"];
+
+  const loadData = async () => {
+    try {
+      const [cls, str] = await Promise.all([api.get("/academics/classes"), api.get("/fees/structure?academic_year=2024")]);
+      setClasses(cls.data.data || []);
+      setStructures(str.data.data || []);
+    } catch (err) { showToast("Failed to load data", "error"); }
+  };
+
+  useEffect(() => { loadData(); }, []);
+
+  const handleSave = async () => {
+    if (!form.class_id || !form.term || !form.tuition_fee) { showToast("Class, term and tuition fee are required", "error"); return; }
+    setSaving(true);
+    try {
+      await api.post("/fees/structure", { ...form, tuition_fee: parseFloat(form.tuition_fee || 0), activity_fee: parseFloat(form.activity_fee || 0), boarding_fee: parseFloat(form.boarding_fee || 0), other_fee: parseFloat(form.other_fee || 0) });
+      showToast("Fee structure saved!");
+      setShowAdd(false);
+      setForm({ class_id: "", term: "Term 1 2024", academic_year: "2024", tuition_fee: "", activity_fee: "", boarding_fee: "", other_fee: "" });
+      loadData();
+    } catch (err) {
+      showToast(err.response?.data?.message || "Failed to save", "error");
+    } finally { setSaving(false); }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this fee structure?")) return;
+    try { await api.delete("/fees/structure/" + id); showToast("Deleted!"); loadData(); }
+    catch (err) { showToast("Failed to delete", "error"); }
+  };
+
+  const handleGenerate = async () => {
+    const term = window.prompt("Enter term to generate fees for:\ne.g. Term 1 2024");
+    if (!term) return;
+    setGenerating(true);
+    try {
+      const res = await api.post("/fees/generate", { term, academic_year: "2024" });
+      showToast(res.data.message);
+    } catch (err) {
+      showToast(err.response?.data?.message || "Failed to generate", "error");
+    } finally { setGenerating(false); }
+  };
+
+  const grouped = {};
+  structures.forEach(s => {
+    if (!grouped[s.class_name]) grouped[s.class_name] = [];
+    grouped[s.class_name].push(s);
+  });
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <div style={{ padding: 14, background: "#e0f2fe", borderRadius: 8, border: "1px solid #7dd3fc", fontSize: 13, color: "#0369a1", flex: 1, marginRight: 16 }}>
+          🏷️ Set fees per class per term. Then click <strong>⚡ Generate Fee Records</strong> to auto-create fee records for all students.
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={handleGenerate} disabled={generating} style={{ background: "#1d4ed8", color: "white", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
+            {generating ? "Generating..." : "⚡ Generate Fee Records"}
+          </button>
+          <button onClick={() => setShowAdd(true)} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>+ Set Fees</button>
+        </div>
+      </div>
+
+      {Object.keys(grouped).length === 0 && (
+        <div style={{ textAlign: "center", padding: 40, color: "#9ca3af", background: "white", borderRadius: 12 }}>No fee structures yet. Click <strong>+ Set Fees</strong> to get started.</div>
+      )}
+
+      {Object.entries(grouped).map(([className, rows]) => (
+        <div key={className} style={{ background: "white", borderRadius: 12, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", marginBottom: 16 }}>
+          <div style={{ padding: "12px 20px", background: "#064e3b", color: "white", fontSize: 14, fontWeight: "bold" }}>📚 {className}</div>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ background: "#f0fdf4" }}>
+                {["Term","Tuition","Activity","Boarding","Other","Total",""].map(h => (
+                  <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, color: "#064e3b", fontWeight: "bold" }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r, i) => (
+                <tr key={r.id} style={{ background: i % 2 ? "#f9fafb" : "white" }}>
+                  <td style={{ padding: "11px 16px", fontSize: 13, fontWeight: "bold" }}>{r.term}</td>
+                  <td style={{ padding: "11px 16px", fontSize: 13 }}>{fmtKES(r.tuition_fee)}</td>
+                  <td style={{ padding: "11px 16px", fontSize: 13, color: "#6b7280" }}>{fmtKES(r.activity_fee)}</td>
+                  <td style={{ padding: "11px 16px", fontSize: 13, color: "#6b7280" }}>{fmtKES(r.boarding_fee)}</td>
+                  <td style={{ padding: "11px 16px", fontSize: 13, color: "#6b7280" }}>{fmtKES(r.other_fee)}</td>
+                  <td style={{ padding: "11px 16px", fontSize: 14, fontWeight: "bold", color: "#064e3b" }}>{fmtKES(r.total_amount)}</td>
+                  <td style={{ padding: "11px 16px" }}>
+                    <button onClick={() => handleDelete(r.id)} style={{ background: "#fee2e2", color: "#dc2626", border: "none", borderRadius: 6, padding: "4px 10px", fontSize: 11, cursor: "pointer" }}>Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ))}
+
+      {showAdd && (
+        <Modal title="🏷️ Set Fee Structure" onClose={() => setShowAdd(false)}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div>
+              <label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>Class *</label>
+              <select value={form.class_id} onChange={e => setForm({...form, class_id: e.target.value})} style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #d1d5db", fontSize: 12, fontFamily: "inherit", outline: "none", background: "white" }}>
+                <option value="">-- Select Class --</option>
+                {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>Term *</label>
+              <select value={form.term} onChange={e => setForm({...form, term: e.target.value})} style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #d1d5db", fontSize: 12, fontFamily: "inherit", outline: "none", background: "white" }}>
+                {terms.map(t => <option key={t}>{t}</option>)}
+              </select>
+            </div>
+            <Field label="Tuition Fee (KES) *" type="number" value={form.tuition_fee} onChange={v => setForm({...form, tuition_fee: v})} placeholder="e.g. 15000" />
+            <Field label="Activity Fee (KES)" type="number" value={form.activity_fee} onChange={v => setForm({...form, activity_fee: v})} placeholder="e.g. 2000" />
+            <Field label="Boarding Fee (KES)" type="number" value={form.boarding_fee} onChange={v => setForm({...form, boarding_fee: v})} placeholder="e.g. 0" />
+            <Field label="Other Fee (KES)" type="number" value={form.other_fee} onChange={v => setForm({...form, other_fee: v})} placeholder="e.g. 500" />
+          </div>
+          <div style={{ marginTop: 12, padding: 12, background: "#f0fdf4", borderRadius: 8, fontSize: 12, color: "#065f46" }}>
+            Total = {fmtKES(parseFloat(form.tuition_fee||0) + parseFloat(form.activity_fee||0) + parseFloat(form.boarding_fee||0) + parseFloat(form.other_fee||0))}
+          </div>
+          <div style={{ display: "flex", gap: 10, marginTop: 16, justifyContent: "flex-end" }}>
+            <button onClick={() => setShowAdd(false)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>Cancel</button>
+            <button onClick={handleSave} disabled={saving} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>{saving ? "Saving..." : "✓ Save Fee Structure"}</button>
           </div>
         </Modal>
       )}
@@ -851,274 +990,6 @@ function MarksEntry({ showToast }) {
   );
 }
 
-function StaffAccounts({ showToast }) {
-  const [staff, setStaff] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "teacher", phone: "" });
-  const [saving, setSaving] = useState(false);
-
-  const loadStaff = async () => {
-    try {
-      const res = await api.get("/auth/staff");
-      setStaff(res.data.data || []);
-    } catch (err) {
-      showToast("Failed to load staff", "error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { loadStaff(); }, []);
-
-  const handleAdd = async () => {
-    if (!form.name || !form.email || !form.password) { showToast("Name, email and password are required", "error"); return; }
-    setSaving(true);
-    try {
-      await api.post("/auth/register", form);
-      showToast(`${form.name} account created! They can now log in.`);
-      setShowAdd(false);
-      setForm({ name: "", email: "", password: "", role: "teacher", phone: "" });
-      loadStaff();
-    } catch (err) {
-      showToast(err.response?.data?.message || "Failed to create account", "error");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const roleColors = { admin: "#064e3b", principal: "#1d4ed8", teacher: "#7c3aed", bursar: "#d97706" };
-
-  return (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <div style={{ padding: 14, background: "#e0f2fe", borderRadius: 8, border: "1px solid #7dd3fc", fontSize: 13, color: "#0369a1", flex: 1, marginRight: 16 }}>
-          👨‍🏫 Staff accounts allow teachers and bursars to log in and use the system. Teachers can enter marks. Bursars can record fee payments.
-        </div>
-        <button onClick={() => setShowAdd(true)} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>+ Add Staff</button>
-      </div>
-
-      {loading ? (
-        <div style={{ textAlign: "center", padding: 40, color: "#9ca3af" }}>Loading...</div>
-      ) : (
-        <div style={{ background: "white", borderRadius: 12, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ background: "#064e3b", color: "white" }}>
-                {["Name","Email","Role","Phone","Status"].map(h => (
-                  <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 12 }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {staff.map((s, i) => (
-                <tr key={s.id} style={{ background: i % 2 === 0 ? "white" : "#f9fafb" }}>
-                  <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: "bold" }}>{s.name}</td>
-                  <td style={{ padding: "12px 16px", fontSize: 13, color: "#6b7280" }}>{s.email}</td>
-                  <td style={{ padding: "12px 16px" }}>
-                    <span style={{ background: roleColors[s.role] || "#6b7280", color: "white", padding: "2px 10px", borderRadius: 10, fontSize: 11, fontWeight: "bold", textTransform: "capitalize" }}>{s.role}</span>
-                  </td>
-                  <td style={{ padding: "12px 16px", fontSize: 13 }}>{s.phone || "—"}</td>
-                  <td style={{ padding: "12px 16px" }}>
-                    <span style={{ background: s.is_active ? "#d1fae5" : "#fee2e2", color: s.is_active ? "#065f46" : "#dc2626", padding: "2px 10px", borderRadius: 10, fontSize: 11, fontWeight: "bold" }}>
-                      {s.is_active ? "✓ Active" : "Inactive"}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {staff.length === 0 && <div style={{ textAlign: "center", padding: 40, color: "#9ca3af" }}>No staff accounts yet</div>}
-        </div>
-      )}
-
-      {showAdd && (
-        <Modal title="👨‍🏫 Create Staff Account" onClose={() => setShowAdd(false)}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <Field label="Full Name *" value={form.name} onChange={v => setForm({...form, name: v})} placeholder="e.g. John Mwangi" />
-            <Field label="Email *" value={form.email} onChange={v => setForm({...form, email: v})} placeholder="e.g. john@school.ac.ke" />
-            <Field label="Password *" type="password" value={form.password} onChange={v => setForm({...form, password: v})} placeholder="Min 8 characters" />
-            <Field label="Phone" value={form.phone} onChange={v => setForm({...form, phone: v})} placeholder="07XXXXXXXX" />
-            <div style={{ gridColumn: "1/-1" }}>
-              <label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>Role *</label>
-              <select value={form.role} onChange={e => setForm({...form, role: e.target.value})} style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #d1d5db", fontSize: 12, fontFamily: "inherit", outline: "none", background: "white" }}>
-                <option value="teacher">Teacher — can enter marks</option>
-                <option value="bursar">Bursar — can record fee payments</option>
-                <option value="principal">Principal — full access</option>
-                <option value="admin">Admin — full access</option>
-              </select>
-            </div>
-          </div>
-          <div style={{ marginTop: 12, padding: 12, background: "#f0fdf4", borderRadius: 8, fontSize: 12, color: "#065f46" }}>
-            ✓ The staff member will log in at the same URL using this email and password.
-          </div>
-          <div style={{ display: "flex", gap: 10, marginTop: 16, justifyContent: "flex-end" }}>
-            <button onClick={() => setShowAdd(false)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>Cancel</button>
-            <button onClick={handleAdd} disabled={saving} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>
-              {saving ? "Creating..." : "✓ Create Account"}
-            </button>
-          </div>
-        </Modal>
-      )}
-    </div>
-  );
-}
-
-function FeeStructure({ showToast }) {
-  const [classes, setClasses] = useState([]);
-  const [structures, setStructures] = useState([]);
-  const [showAdd, setShowAdd] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({
-    class_id: "", term: "Term 1 2024",
-    academic_year: "2024",
-    tuition_fee: "", activity_fee: "",
-    boarding_fee: "", other_fee: ""
-  });
-
-  const terms = ["Term 1 2024", "Term 2 2024", "Term 3 2024"];
-
-  const loadData = async () => {
-    try {
-      const [cls, str] = await Promise.all([
-        api.get("/academics/classes"),
-        api.get("/fees/structure?academic_year=2024")
-      ]);
-      setClasses(cls.data.data || []);
-      setStructures(str.data.data || []);
-    } catch (err) {
-      showToast("Failed to load data", "error");
-    }
-  };
-
-  useEffect(() => { loadData(); }, []);
-
-  const handleSave = async () => {
-    if (!form.class_id || !form.term || !form.tuition_fee) {
-      showToast("Class, term and tuition fee are required", "error");
-      return;
-    }
-    setSaving(true);
-    try {
-      await api.post("/fees/structure", {
-        ...form,
-        tuition_fee: parseFloat(form.tuition_fee || 0),
-        activity_fee: parseFloat(form.activity_fee || 0),
-        boarding_fee: parseFloat(form.boarding_fee || 0),
-        other_fee: parseFloat(form.other_fee || 0),
-      });
-      showToast("Fee structure saved!");
-      setShowAdd(false);
-      setForm({ class_id: "", term: "Term 1 2024", academic_year: "2024", tuition_fee: "", activity_fee: "", boarding_fee: "", other_fee: "" });
-      loadData();
-    } catch (err) {
-      showToast(err.response?.data?.message || "Failed to save", "error");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this fee structure?")) return;
-    try {
-      await api.delete("/fees/structure/" + id);
-      showToast("Deleted successfully");
-      loadData();
-    } catch (err) {
-      showToast("Failed to delete", "error");
-    }
-  };
-
-  const grouped = {};
-  structures.forEach(s => {
-    if (!grouped[s.class_name]) grouped[s.class_name] = [];
-    grouped[s.class_name].push(s);
-  });
-
-  return (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <div style={{ padding: 14, background: "#e0f2fe", borderRadius: 8, border: "1px solid #7dd3fc", fontSize: 13, color: "#0369a1", flex: 1, marginRight: 16 }}>
-          🏷️ Set the fees each class must pay per term. When a payment is recorded the expected amount loads automatically.
-        </div>
-        <button onClick={() => setShowAdd(true)} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>+ Set Fees</button>
-      </div>
-
-      {Object.keys(grouped).length === 0 && (
-        <div style={{ textAlign: "center", padding: 40, color: "#9ca3af", background: "white", borderRadius: 12 }}>
-          No fee structures set yet. Click <strong>+ Set Fees</strong> to get started.
-        </div>
-      )}
-
-      {Object.entries(grouped).map(([className, rows]) => (
-        <div key={className} style={{ background: "white", borderRadius: 12, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", marginBottom: 16 }}>
-          <div style={{ padding: "12px 20px", background: "#064e3b", color: "white", fontSize: 14, fontWeight: "bold" }}>
-            📚 {className}
-          </div>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ background: "#f0fdf4" }}>
-                {["Term","Tuition","Activity","Boarding","Other","Total",""].map(h => (
-                  <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, color: "#064e3b", fontWeight: "bold" }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r, i) => (
-                <tr key={r.id} style={{ background: i % 2 ? "#f9fafb" : "white" }}>
-                  <td style={{ padding: "11px 16px", fontSize: 13, fontWeight: "bold" }}>{r.term}</td>
-                  <td style={{ padding: "11px 16px", fontSize: 13 }}>{fmtKES(r.tuition_fee)}</td>
-                  <td style={{ padding: "11px 16px", fontSize: 13, color: "#6b7280" }}>{fmtKES(r.activity_fee)}</td>
-                  <td style={{ padding: "11px 16px", fontSize: 13, color: "#6b7280" }}>{fmtKES(r.boarding_fee)}</td>
-                  <td style={{ padding: "11px 16px", fontSize: 13, color: "#6b7280" }}>{fmtKES(r.other_fee)}</td>
-                  <td style={{ padding: "11px 16px", fontSize: 14, fontWeight: "bold", color: "#064e3b" }}>{fmtKES(r.total_amount)}</td>
-                  <td style={{ padding: "11px 16px" }}>
-                    <button onClick={() => handleDelete(r.id)} style={{ background: "#fee2e2", color: "#dc2626", border: "none", borderRadius: 6, padding: "4px 10px", fontSize: 11, cursor: "pointer" }}>Delete</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ))}
-
-      {showAdd && (
-        <Modal title="🏷️ Set Fee Structure" onClose={() => setShowAdd(false)}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <div>
-              <label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>Class *</label>
-              <select value={form.class_id} onChange={e => setForm({...form, class_id: e.target.value})}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #d1d5db", fontSize: 12, fontFamily: "inherit", outline: "none", background: "white" }}>
-                <option value="">-- Select Class --</option>
-                {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>Term *</label>
-              <select value={form.term} onChange={e => setForm({...form, term: e.target.value})}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #d1d5db", fontSize: 12, fontFamily: "inherit", outline: "none", background: "white" }}>
-                {terms.map(t => <option key={t}>{t}</option>)}
-              </select>
-            </div>
-            <Field label="Tuition Fee (KES) *" type="number" value={form.tuition_fee} onChange={v => setForm({...form, tuition_fee: v})} placeholder="e.g. 15000" />
-            <Field label="Activity Fee (KES)" type="number" value={form.activity_fee} onChange={v => setForm({...form, activity_fee: v})} placeholder="e.g. 2000" />
-            <Field label="Boarding Fee (KES)" type="number" value={form.boarding_fee} onChange={v => setForm({...form, boarding_fee: v})} placeholder="e.g. 0" />
-            <Field label="Other Fee (KES)" type="number" value={form.other_fee} onChange={v => setForm({...form, other_fee: v})} placeholder="e.g. 500" />
-          </div>
-          <div style={{ marginTop: 12, padding: 12, background: "#f0fdf4", borderRadius: 8, fontSize: 12, color: "#065f46" }}>
-            Total = {fmtKES((parseFloat(form.tuition_fee||0) + parseFloat(form.activity_fee||0) + parseFloat(form.boarding_fee||0) + parseFloat(form.other_fee||0)))}
-          </div>
-          <div style={{ display: "flex", gap: 10, marginTop: 16, justifyContent: "flex-end" }}>
-            <button onClick={() => setShowAdd(false)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>Cancel</button>
-            <button onClick={handleSave} disabled={saving} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>
-              {saving ? "Saving..." : "✓ Save Fee Structure"}
-            </button>
-          </div>
-        </Modal>
-      )}
-    </div>
-  );
-}
 function Attendance({ showToast }) {
   const [classes, setClasses] = useState([]);
   const [selectedClass, setSelectedClass] = useState("");
@@ -1143,10 +1014,7 @@ function Attendance({ showToast }) {
       .finally(() => setLoading(false));
   }, [selectedClass, selectedDate]);
 
-  const setStatus = (studentId, status) => {
-    setStudents(prev => prev.map(s => s.id === studentId ? { ...s, status } : s));
-  };
-
+  const setStatus = (studentId, status) => setStudents(prev => prev.map(s => s.id === studentId ? { ...s, status } : s));
   const markAll = (status) => setStudents(prev => prev.map(s => ({ ...s, status })));
 
   const handleSave = async () => {
@@ -1174,7 +1042,6 @@ function Attendance({ showToast }) {
 
   const statusColors = { present: "#16a34a", absent: "#dc2626", late: "#d97706", excused: "#6b7280" };
   const statusBg = { present: "#d1fae5", absent: "#fee2e2", late: "#fef3c7", excused: "#f3f4f6" };
-
   const summary = { present: students.filter(s => s.status === "present").length, absent: students.filter(s => s.status === "absent").length, late: students.filter(s => s.status === "late").length };
 
   return (
@@ -1256,10 +1123,7 @@ function Attendance({ showToast }) {
               </div>
             </div>
           )}
-
-          {!loading && !selectedClass && (
-            <div style={{ textAlign: "center", padding: 40, color: "#9ca3af", background: "white", borderRadius: 12 }}>Select a class above to mark attendance</div>
-          )}
+          {!loading && !selectedClass && <div style={{ textAlign: "center", padding: 40, color: "#9ca3af", background: "white", borderRadius: 12 }}>Select a class above to mark attendance</div>}
         </div>
       )}
 
@@ -1268,7 +1132,7 @@ function Attendance({ showToast }) {
           <div style={{ background: "white", borderRadius: 12, padding: 20, marginBottom: 16, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 12, alignItems: "end" }}>
               <div>
-                <label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>Select Class</label>
+                <label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>Class</label>
                 <select value={selectedClass} onChange={e => setSelectedClass(e.target.value)} style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 13, fontFamily: "inherit", outline: "none", background: "white" }}>
                   <option value="">-- All Classes --</option>
                   {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -1278,16 +1142,15 @@ function Attendance({ showToast }) {
                 <label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>Month</label>
                 <input type="month" value={reportMonth} onChange={e => setReportMonth(e.target.value)} style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 13, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
               </div>
-              <button onClick={loadReport} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "9px 20px", fontSize: 13, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>Load Report</button>
+              <button onClick={loadReport} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "9px 20px", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Load Report</button>
             </div>
           </div>
-
           {reportData.length > 0 && (
             <div style={{ background: "white", borderRadius: 12, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
                   <tr style={{ background: "#064e3b", color: "white" }}>
-                    {["Student","Adm. No.","Present","Absent","Late","Total Days","Rate"].map(h => (
+                    {["Student","Adm. No.","Present","Absent","Late","Total","Rate"].map(h => (
                       <th key={h} style={{ padding: "11px 16px", textAlign: "left", fontSize: 11 }}>{h}</th>
                     ))}
                   </tr>
@@ -1313,10 +1176,106 @@ function Attendance({ showToast }) {
               </table>
             </div>
           )}
-          {reportData.length === 0 && (
-            <div style={{ textAlign: "center", padding: 40, color: "#9ca3af", background: "white", borderRadius: 12 }}>Select a class and month then click Load Report</div>
-          )}
+          {reportData.length === 0 && <div style={{ textAlign: "center", padding: 40, color: "#9ca3af", background: "white", borderRadius: 12 }}>Select a class and month then click Load Report</div>}
         </div>
+      )}
+    </div>
+  );
+}
+
+function StaffAccounts({ showToast }) {
+  const [staff, setStaff] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState({ name: "", email: "", password: "", role: "teacher", phone: "" });
+  const [saving, setSaving] = useState(false);
+
+  const loadStaff = async () => {
+    try {
+      const res = await api.get("/auth/staff");
+      setStaff(res.data.data || []);
+    } catch (err) {
+      showToast("Failed to load staff", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { loadStaff(); }, []);
+
+  const handleAdd = async () => {
+    if (!form.name || !form.email || !form.password) { showToast("Name, email and password are required", "error"); return; }
+    setSaving(true);
+    try {
+      await api.post("/auth/register", form);
+      showToast(`${form.name} account created!`);
+      setShowAdd(false);
+      setForm({ name: "", email: "", password: "", role: "teacher", phone: "" });
+      loadStaff();
+    } catch (err) {
+      showToast(err.response?.data?.message || "Failed to create account", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const roleColors = { admin: "#064e3b", principal: "#1d4ed8", teacher: "#7c3aed", bursar: "#d97706" };
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <div style={{ padding: 14, background: "#e0f2fe", borderRadius: 8, border: "1px solid #7dd3fc", fontSize: 13, color: "#0369a1", flex: 1, marginRight: 16 }}>
+          👨‍🏫 Create accounts for teachers and bursars to log in and use the system.
+        </div>
+        <button onClick={() => setShowAdd(true)} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>+ Add Staff</button>
+      </div>
+      {loading ? <div style={{ textAlign: "center", padding: 40, color: "#9ca3af" }}>Loading...</div> : (
+        <div style={{ background: "white", borderRadius: 12, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ background: "#064e3b", color: "white" }}>
+                {["Name","Email","Role","Phone","Status"].map(h => (
+                  <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 12 }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {staff.map((s, i) => (
+                <tr key={s.id} style={{ background: i % 2 === 0 ? "white" : "#f9fafb" }}>
+                  <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: "bold" }}>{s.name}</td>
+                  <td style={{ padding: "12px 16px", fontSize: 13, color: "#6b7280" }}>{s.email}</td>
+                  <td style={{ padding: "12px 16px" }}><span style={{ background: roleColors[s.role] || "#6b7280", color: "white", padding: "2px 10px", borderRadius: 10, fontSize: 11, fontWeight: "bold", textTransform: "capitalize" }}>{s.role}</span></td>
+                  <td style={{ padding: "12px 16px", fontSize: 13 }}>{s.phone || "—"}</td>
+                  <td style={{ padding: "12px 16px" }}><span style={{ background: s.is_active ? "#d1fae5" : "#fee2e2", color: s.is_active ? "#065f46" : "#dc2626", padding: "2px 10px", borderRadius: 10, fontSize: 11, fontWeight: "bold" }}>{s.is_active ? "✓ Active" : "Inactive"}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {staff.length === 0 && <div style={{ textAlign: "center", padding: 40, color: "#9ca3af" }}>No staff accounts yet</div>}
+        </div>
+      )}
+      {showAdd && (
+        <Modal title="👨‍🏫 Create Staff Account" onClose={() => setShowAdd(false)}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <Field label="Full Name *" value={form.name} onChange={v => setForm({...form, name: v})} />
+            <Field label="Email *" value={form.email} onChange={v => setForm({...form, email: v})} />
+            <Field label="Password *" type="password" value={form.password} onChange={v => setForm({...form, password: v})} />
+            <Field label="Phone" value={form.phone} onChange={v => setForm({...form, phone: v})} />
+            <div style={{ gridColumn: "1/-1" }}>
+              <label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>Role</label>
+              <select value={form.role} onChange={e => setForm({...form, role: e.target.value})} style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #d1d5db", fontSize: 12, fontFamily: "inherit", outline: "none", background: "white" }}>
+                <option value="teacher">Teacher — can enter marks</option>
+                <option value="bursar">Bursar — can record payments</option>
+                <option value="principal">Principal — full access</option>
+                <option value="admin">Admin — full access</option>
+              </select>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 10, marginTop: 16, justifyContent: "flex-end" }}>
+            <button onClick={() => setShowAdd(false)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>Cancel</button>
+            <button onClick={handleAdd} disabled={saving} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>{saving ? "Creating..." : "✓ Create Account"}</button>
+          </div>
+        </Modal>
       )}
     </div>
   );
