@@ -138,6 +138,7 @@ export default function App() {
             { id: "marks",        label: "Enter Marks",   icon: "✏️" },
             { id: "attendance",   label: "Attendance",    icon: "📅" },
             { id: "staff",        label: "Staff Accounts",icon: "👨‍🏫" },
+            { id: "settings", label: "School Settings", icon: "⚙️" },
           ].map(item => {
             const active = page === item.id || (item.id === "students" && page === "student");
             return (
@@ -168,6 +169,7 @@ export default function App() {
               {page === "marks"        && "✏️ Enter Marks"}
               {page === "attendance"   && "📅 Attendance"}
               {page === "staff"        && "👨‍🏫 Staff Accounts"}
+              {page === "settings" && "⚙️ School Settings"}
             </h1>
             <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>
               {new Date().toLocaleDateString("en-KE", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
@@ -187,6 +189,7 @@ export default function App() {
           {page === "marks"        && <MarksEntry showToast={showToast} />}
           {page === "attendance"   && <Attendance showToast={showToast} />}
           {page === "staff"        && <StaffAccounts showToast={showToast} />}
+          {page === "settings" && <SchoolSettings showToast={showToast} />}
         </div>
       </main>
 
@@ -1327,4 +1330,262 @@ function SelectField({ label, value, options, onChange }) {
       </select>
     </div>
   );
+  function SchoolSettings({ showToast }) {
+  const [terms, setTerms] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showAdd, setShowAdd] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [currentTerm, setCurrentTerm] = useState(null);
+  const [form, setForm] = useState({
+    academic_year: String(new Date().getFullYear()),
+    term: "",
+    term_start_date: "",
+    term_end_date: "",
+    has_half_term: false,
+    half_term_start: "",
+    half_term_end: "",
+    is_current: false,
+  });
+
+  const termOptions = () => {
+    const year = form.academic_year || new Date().getFullYear();
+    return [
+      `Term 1 ${year}`,
+      `Term 2 ${year}`,
+      `Term 3 ${year}`,
+    ];
+  };
+
+  const loadData = async () => {
+    try {
+      const [termsRes, currentRes] = await Promise.all([
+        api.get("/settings/terms"),
+        api.get("/settings/current-term"),
+      ]);
+      setTerms(termsRes.data.data || []);
+      setCurrentTerm(currentRes.data.data || null);
+    } catch (err) {
+      showToast("Failed to load settings", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { loadData(); }, []);
+
+  const handleSave = async () => {
+    if (!form.term || !form.term_start_date || !form.term_end_date) {
+      showToast("Term name, start and end dates are required", "error");
+      return;
+    }
+    if (form.has_half_term && (!form.half_term_start || !form.half_term_end)) {
+      showToast("Please enter half term start and end dates", "error");
+      return;
+    }
+    setSaving(true);
+    try {
+      await api.post("/settings/terms", form);
+      showToast("Term saved successfully!");
+      setShowAdd(false);
+      setForm({ academic_year: String(new Date().getFullYear()), term: "", term_start_date: "", term_end_date: "", has_half_term: false, half_term_start: "", half_term_end: "", is_current: false });
+      loadData();
+    } catch (err) {
+      showToast(err.response?.data?.message || "Failed to save", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSetCurrent = async (id) => {
+    try {
+      await api.put(`/settings/terms/${id}/set-current`);
+      showToast("Current term updated!");
+      loadData();
+    } catch (err) {
+      showToast("Failed to update current term", "error");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this term?")) return;
+    try {
+      await api.delete(`/settings/terms/${id}`);
+      showToast("Term deleted!");
+      loadData();
+    } catch (err) {
+      showToast("Failed to delete", "error");
+    }
+  };
+
+  const fmt = (d) => d ? new Date(d).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" }) : "—";
+
+  const grouped = {};
+  terms.forEach(t => {
+    if (!grouped[t.academic_year]) grouped[t.academic_year] = [];
+    grouped[t.academic_year].push(t);
+  });
+
+  return (
+    <div>
+      {/* Current Term Banner */}
+      {currentTerm && (
+        <div style={{ background: "linear-gradient(135deg, #064e3b, #065f46)", borderRadius: 12, padding: 20, marginBottom: 20, color: "white", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+          <div>
+            <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 4, textTransform: "uppercase", letterSpacing: 1 }}>Current Term</div>
+            <div style={{ fontSize: 22, fontWeight: "bold" }}>{currentTerm.term}</div>
+            <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>
+              {fmt(currentTerm.term_start_date)} → {fmt(currentTerm.term_end_date)}
+            </div>
+            {currentTerm.has_half_term && (
+              <div style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>
+                📅 Half Term: {fmt(currentTerm.half_term_start)} → {fmt(currentTerm.half_term_end)}
+              </div>
+            )}
+          </div>
+          <div style={{ background: "#f59e0b", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: "bold", color: "#1a1a1a" }}>
+            📅 {currentTerm.academic_year}
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <div style={{ padding: 14, background: "#e0f2fe", borderRadius: 8, border: "1px solid #7dd3fc", fontSize: 13, color: "#0369a1", flex: 1, marginRight: 16 }}>
+          📅 Set your school's term dates including half term breaks. The system will automatically detect the current term based on today's date.
+        </div>
+        <button onClick={() => setShowAdd(true)} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>+ Add Term</button>
+      </div>
+
+      {loading ? <div style={{ textAlign: "center", padding: 40, color: "#9ca3af" }}>Loading...</div> : (
+        Object.keys(grouped).sort((a, b) => b - a).map(year => (
+          <div key={year} style={{ marginBottom: 24 }}>
+            <h3 style={{ margin: "0 0 12px", color: "#064e3b", fontSize: 16 }}>📚 Academic Year {year}</h3>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 16 }}>
+              {grouped[year].map(t => (
+                <div key={t.id} style={{ background: "white", borderRadius: 12, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", border: t.is_current ? "2px solid #064e3b" : "1px solid #e5e7eb" }}>
+                  {t.is_current && (
+                    <div style={{ background: "#064e3b", color: "#a7f3d0", fontSize: 11, padding: "4px 12px", fontWeight: "bold", textAlign: "center" }}>
+                      ✓ CURRENT TERM
+                    </div>
+                  )}
+                  <div style={{ padding: 16 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                      <h4 style={{ margin: 0, color: "#064e3b", fontSize: 15 }}>{t.term}</h4>
+                      <span style={{ background: t.has_half_term ? "#dbeafe" : "#f3f4f6", color: t.has_half_term ? "#1d4ed8" : "#6b7280", fontSize: 10, padding: "2px 8px", borderRadius: 10, fontWeight: "bold" }}>
+                        {t.has_half_term ? "Has Half Term" : "No Half Term"}
+                      </span>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
+                      <div style={{ background: "#f0fdf4", borderRadius: 8, padding: "8px 12px" }}>
+                        <div style={{ fontSize: 10, color: "#6b7280", marginBottom: 2 }}>OPENS</div>
+                        <div style={{ fontSize: 13, fontWeight: "bold", color: "#064e3b" }}>{fmt(t.term_start_date)}</div>
+                      </div>
+                      <div style={{ background: "#fef2f2", borderRadius: 8, padding: "8px 12px" }}>
+                        <div style={{ fontSize: 10, color: "#6b7280", marginBottom: 2 }}>CLOSES</div>
+                        <div style={{ fontSize: 13, fontWeight: "bold", color: "#dc2626" }}>{fmt(t.term_end_date)}</div>
+                      </div>
+                    </div>
+
+                    {t.has_half_term && (
+                      <div style={{ background: "#fef3c7", borderRadius: 8, padding: "8px 12px", marginBottom: 12 }}>
+                        <div style={{ fontSize: 10, color: "#92400e", marginBottom: 4, fontWeight: "bold" }}>📅 HALF TERM BREAK</div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                          <div>
+                            <div style={{ fontSize: 10, color: "#6b7280" }}>FROM</div>
+                            <div style={{ fontSize: 12, fontWeight: "bold", color: "#92400e" }}>{fmt(t.half_term_start)}</div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 10, color: "#6b7280" }}>TO</div>
+                            <div style={{ fontSize: 12, fontWeight: "bold", color: "#92400e" }}>{fmt(t.half_term_end)}</div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div style={{ display: "flex", gap: 8 }}>
+                      {!t.is_current && (
+                        <button onClick={() => handleSetCurrent(t.id)} style={{ flex: 1, background: "#064e3b", color: "white", border: "none", borderRadius: 6, padding: "7px 12px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
+                          Set as Current
+                        </button>
+                      )}
+                      <button onClick={() => handleDelete(t.id)} style={{ background: "#fee2e2", color: "#dc2626", border: "none", borderRadius: 6, padding: "7px 12px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))
+      )}
+
+      {terms.length === 0 && !loading && (
+        <div style={{ textAlign: "center", padding: 40, color: "#9ca3af", background: "white", borderRadius: 12 }}>
+          No terms set yet. Click <strong>+ Add Term</strong> to get started.
+        </div>
+      )}
+
+      {showAdd && (
+        <Modal title="📅 Add School Term" onClose={() => setShowAdd(false)}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <Field label="Academic Year *" value={form.academic_year} onChange={v => setForm({...form, academic_year: v, term: ""})} placeholder="e.g. 2025" />
+            <div>
+              <label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>Term *</label>
+              <select value={form.term} onChange={e => setForm({...form, term: e.target.value})} style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #d1d5db", fontSize: 12, fontFamily: "inherit", outline: "none", background: "white" }}>
+                <option value="">-- Select Term --</option>
+                {termOptions().map(t => <option key={t}>{t}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div style={{ marginTop: 16, padding: 14, background: "#f0fdf4", borderRadius: 8, border: "1px solid #6ee7b7" }}>
+            <div style={{ fontWeight: "bold", color: "#064e3b", marginBottom: 10, fontSize: 13 }}>📅 Term Dates</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <Field label="Opening Date *" type="date" value={form.term_start_date} onChange={v => setForm({...form, term_start_date: v})} />
+              <Field label="Closing Date *" type="date" value={form.term_end_date} onChange={v => setForm({...form, term_end_date: v})} />
+            </div>
+          </div>
+
+          <div style={{ marginTop: 12 }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", padding: 12, background: form.has_half_term ? "#fef3c7" : "#f9fafb", borderRadius: 8, border: form.has_half_term ? "1px solid #f59e0b" : "1px solid #e5e7eb" }}>
+              <input type="checkbox" checked={form.has_half_term} onChange={e => setForm({...form, has_half_term: e.target.checked, half_term_start: "", half_term_end: ""})} style={{ width: 16, height: 16, cursor: "pointer" }} />
+              <div>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: "#92400e" }}>📅 This term has a half term break</div>
+                <div style={{ fontSize: 11, color: "#6b7280" }}>Term 1 and Term 2 in Kenya usually have one half term break</div>
+              </div>
+            </label>
+          </div>
+
+          {form.has_half_term && (
+            <div style={{ marginTop: 12, padding: 14, background: "#fef3c7", borderRadius: 8, border: "1px solid #f59e0b" }}>
+              <div style={{ fontWeight: "bold", color: "#92400e", marginBottom: 10, fontSize: 13 }}>Half Term Break Dates</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <Field label="Half Term Starts *" type="date" value={form.half_term_start} onChange={v => setForm({...form, half_term_start: v})} />
+                <Field label="Half Term Ends *" type="date" value={form.half_term_end} onChange={v => setForm({...form, half_term_end: v})} />
+              </div>
+            </div>
+          )}
+
+          <div style={{ marginTop: 12 }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", padding: 12, background: form.is_current ? "#d1fae5" : "#f9fafb", borderRadius: 8, border: form.is_current ? "1px solid #6ee7b7" : "1px solid #e5e7eb" }}>
+              <input type="checkbox" checked={form.is_current} onChange={e => setForm({...form, is_current: e.target.checked})} style={{ width: 16, height: 16, cursor: "pointer" }} />
+              <div>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: "#064e3b" }}>✓ Set as current term</div>
+                <div style={{ fontSize: 11, color: "#6b7280" }}>The whole system will use this term for marks, fees and attendance</div>
+              </div>
+            </label>
+          </div>
+
+          <div style={{ display: "flex", gap: 10, marginTop: 16, justifyContent: "flex-end" }}>
+            <button onClick={() => setShowAdd(false)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>Cancel</button>
+            <button onClick={handleSave} disabled={saving} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>
+              {saving ? "Saving..." : "✓ Save Term"}
+            </button>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
 }
