@@ -138,6 +138,7 @@ export default function App() {
             { id: "marks",        label: "Enter Marks",   icon: "✏️" },
             { id: "attendance",   label: "Attendance",    icon: "📅" },
             { id: "staff",        label: "Staff Accounts",icon: "👨‍🏫" },
+            { id: "settings", label: "School Settings", icon: "⚙️" },
           ].map(item => {
             const active = page === item.id || (item.id === "students" && page === "student");
             return (
@@ -168,6 +169,8 @@ export default function App() {
               {page === "marks"        && "✏️ Enter Marks"}
               {page === "attendance"   && "📅 Attendance"}
               {page === "staff"        && "👨‍🏫 Staff Accounts"}
+              {page === "settings" && "⚙️ School Settings"}
+              
             </h1>
             <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>
               {new Date().toLocaleDateString("en-KE", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
@@ -187,6 +190,7 @@ export default function App() {
           {page === "marks"        && <MarksEntry showToast={showToast} />}
           {page === "attendance"   && <Attendance showToast={showToast} />}
           {page === "staff"        && <StaffAccounts showToast={showToast} />}
+          {page === "settings" && <SchoolSettings showToast={showToast} />}
         </div>
       </main>
 
