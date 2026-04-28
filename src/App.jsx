@@ -138,7 +138,6 @@ export default function App() {
             { id: "marks",        label: "Enter Marks",   icon: "✏️" },
             { id: "attendance",   label: "Attendance",    icon: "📅" },
             { id: "staff",        label: "Staff Accounts",icon: "👨‍🏫" },
-            { id: "settings", label: "School Settings", icon: "⚙️" },
           ].map(item => {
             const active = page === item.id || (item.id === "students" && page === "student");
             return (
@@ -169,7 +168,6 @@ export default function App() {
               {page === "marks"        && "✏️ Enter Marks"}
               {page === "attendance"   && "📅 Attendance"}
               {page === "staff"        && "👨‍🏫 Staff Accounts"}
-              {page === "settings" && "⚙️ School Settings"}
             </h1>
             <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>
               {new Date().toLocaleDateString("en-KE", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
@@ -189,7 +187,6 @@ export default function App() {
           {page === "marks"        && <MarksEntry showToast={showToast} />}
           {page === "attendance"   && <Attendance showToast={showToast} />}
           {page === "staff"        && <StaffAccounts showToast={showToast} />}
-          {page === "settings" && <SchoolSettings showToast={showToast} />}
         </div>
       </main>
 
@@ -1330,7 +1327,9 @@ function SelectField({ label, value, options, onChange }) {
       </select>
     </div>
   );
-  function SchoolSettings({ showToast }) {
+}
+
+function SchoolSettings({ showToast }) {
   const [terms, setTerms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
@@ -1349,11 +1348,7 @@ function SelectField({ label, value, options, onChange }) {
 
   const termOptions = () => {
     const year = form.academic_year || new Date().getFullYear();
-    return [
-      `Term 1 ${year}`,
-      `Term 2 ${year}`,
-      `Term 3 ${year}`,
-    ];
+    return [`Term 1 ${year}`, `Term 2 ${year}`, `Term 3 ${year}`];
   };
 
   const loadData = async () => {
@@ -1427,30 +1422,23 @@ function SelectField({ label, value, options, onChange }) {
 
   return (
     <div>
-      {/* Current Term Banner */}
       {currentTerm && (
         <div style={{ background: "linear-gradient(135deg, #064e3b, #065f46)", borderRadius: 12, padding: 20, marginBottom: 20, color: "white", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
           <div>
             <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 4, textTransform: "uppercase", letterSpacing: 1 }}>Current Term</div>
             <div style={{ fontSize: 22, fontWeight: "bold" }}>{currentTerm.term}</div>
-            <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>
-              {fmt(currentTerm.term_start_date)} → {fmt(currentTerm.term_end_date)}
-            </div>
+            <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>{fmt(currentTerm.term_start_date)} → {fmt(currentTerm.term_end_date)}</div>
             {currentTerm.has_half_term && (
-              <div style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>
-                📅 Half Term: {fmt(currentTerm.half_term_start)} → {fmt(currentTerm.half_term_end)}
-              </div>
+              <div style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>📅 Half Term: {fmt(currentTerm.half_term_start)} → {fmt(currentTerm.half_term_end)}</div>
             )}
           </div>
-          <div style={{ background: "#f59e0b", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: "bold", color: "#1a1a1a" }}>
-            📅 {currentTerm.academic_year}
-          </div>
+          <div style={{ background: "#f59e0b", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: "bold", color: "#1a1a1a" }}>📅 {currentTerm.academic_year}</div>
         </div>
       )}
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <div style={{ padding: 14, background: "#e0f2fe", borderRadius: 8, border: "1px solid #7dd3fc", fontSize: 13, color: "#0369a1", flex: 1, marginRight: 16 }}>
-          📅 Set your school's term dates including half term breaks. The system will automatically detect the current term based on today's date.
+          📅 Set your school term dates including half term breaks. The system auto-detects the current term based on today's date.
         </div>
         <button onClick={() => setShowAdd(true)} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>+ Add Term</button>
       </div>
@@ -1463,9 +1451,7 @@ function SelectField({ label, value, options, onChange }) {
               {grouped[year].map(t => (
                 <div key={t.id} style={{ background: "white", borderRadius: 12, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", border: t.is_current ? "2px solid #064e3b" : "1px solid #e5e7eb" }}>
                   {t.is_current && (
-                    <div style={{ background: "#064e3b", color: "#a7f3d0", fontSize: 11, padding: "4px 12px", fontWeight: "bold", textAlign: "center" }}>
-                      ✓ CURRENT TERM
-                    </div>
+                    <div style={{ background: "#064e3b", color: "#a7f3d0", fontSize: 11, padding: "4px 12px", fontWeight: "bold", textAlign: "center" }}>✓ CURRENT TERM</div>
                   )}
                   <div style={{ padding: 16 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
@@ -1474,7 +1460,6 @@ function SelectField({ label, value, options, onChange }) {
                         {t.has_half_term ? "Has Half Term" : "No Half Term"}
                       </span>
                     </div>
-
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
                       <div style={{ background: "#f0fdf4", borderRadius: 8, padding: "8px 12px" }}>
                         <div style={{ fontSize: 10, color: "#6b7280", marginBottom: 2 }}>OPENS</div>
@@ -1485,7 +1470,6 @@ function SelectField({ label, value, options, onChange }) {
                         <div style={{ fontSize: 13, fontWeight: "bold", color: "#dc2626" }}>{fmt(t.term_end_date)}</div>
                       </div>
                     </div>
-
                     {t.has_half_term && (
                       <div style={{ background: "#fef3c7", borderRadius: 8, padding: "8px 12px", marginBottom: 12 }}>
                         <div style={{ fontSize: 10, color: "#92400e", marginBottom: 4, fontWeight: "bold" }}>📅 HALF TERM BREAK</div>
@@ -1501,16 +1485,11 @@ function SelectField({ label, value, options, onChange }) {
                         </div>
                       </div>
                     )}
-
                     <div style={{ display: "flex", gap: 8 }}>
                       {!t.is_current && (
-                        <button onClick={() => handleSetCurrent(t.id)} style={{ flex: 1, background: "#064e3b", color: "white", border: "none", borderRadius: 6, padding: "7px 12px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
-                          Set as Current
-                        </button>
+                        <button onClick={() => handleSetCurrent(t.id)} style={{ flex: 1, background: "#064e3b", color: "white", border: "none", borderRadius: 6, padding: "7px 12px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>Set as Current</button>
                       )}
-                      <button onClick={() => handleDelete(t.id)} style={{ background: "#fee2e2", color: "#dc2626", border: "none", borderRadius: 6, padding: "7px 12px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
-                        Delete
-                      </button>
+                      <button onClick={() => handleDelete(t.id)} style={{ background: "#fee2e2", color: "#dc2626", border: "none", borderRadius: 6, padding: "7px 12px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>Delete</button>
                     </div>
                   </div>
                 </div>
@@ -1538,7 +1517,6 @@ function SelectField({ label, value, options, onChange }) {
               </select>
             </div>
           </div>
-
           <div style={{ marginTop: 16, padding: 14, background: "#f0fdf4", borderRadius: 8, border: "1px solid #6ee7b7" }}>
             <div style={{ fontWeight: "bold", color: "#064e3b", marginBottom: 10, fontSize: 13 }}>📅 Term Dates</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -1546,7 +1524,6 @@ function SelectField({ label, value, options, onChange }) {
               <Field label="Closing Date *" type="date" value={form.term_end_date} onChange={v => setForm({...form, term_end_date: v})} />
             </div>
           </div>
-
           <div style={{ marginTop: 12 }}>
             <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", padding: 12, background: form.has_half_term ? "#fef3c7" : "#f9fafb", borderRadius: 8, border: form.has_half_term ? "1px solid #f59e0b" : "1px solid #e5e7eb" }}>
               <input type="checkbox" checked={form.has_half_term} onChange={e => setForm({...form, has_half_term: e.target.checked, half_term_start: "", half_term_end: ""})} style={{ width: 16, height: 16, cursor: "pointer" }} />
@@ -1556,7 +1533,6 @@ function SelectField({ label, value, options, onChange }) {
               </div>
             </label>
           </div>
-
           {form.has_half_term && (
             <div style={{ marginTop: 12, padding: 14, background: "#fef3c7", borderRadius: 8, border: "1px solid #f59e0b" }}>
               <div style={{ fontWeight: "bold", color: "#92400e", marginBottom: 10, fontSize: 13 }}>Half Term Break Dates</div>
@@ -1566,7 +1542,6 @@ function SelectField({ label, value, options, onChange }) {
               </div>
             </div>
           )}
-
           <div style={{ marginTop: 12 }}>
             <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", padding: 12, background: form.is_current ? "#d1fae5" : "#f9fafb", borderRadius: 8, border: form.is_current ? "1px solid #6ee7b7" : "1px solid #e5e7eb" }}>
               <input type="checkbox" checked={form.is_current} onChange={e => setForm({...form, is_current: e.target.checked})} style={{ width: 16, height: 16, cursor: "pointer" }} />
@@ -1576,7 +1551,6 @@ function SelectField({ label, value, options, onChange }) {
               </div>
             </label>
           </div>
-
           <div style={{ display: "flex", gap: 10, marginTop: 16, justifyContent: "flex-end" }}>
             <button onClick={() => setShowAdd(false)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>Cancel</button>
             <button onClick={handleSave} disabled={saving} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>
@@ -1587,5 +1561,4 @@ function SelectField({ label, value, options, onChange }) {
       )}
     </div>
   );
-}
 }
