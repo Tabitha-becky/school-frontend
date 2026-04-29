@@ -1,4 +1,4 @@
-     <div style={{ background: student.health?.current_medication !== "None" ? "#fef3c7" : "white", borderRadius: 12, padding: 20, boxShadow: "0 2px 10px rgba(0,0,0,0.06)", border: student.health?.current_medication !== "None" ? "2px solid #f59e0b" : "none" }}>
+<div style={{ background: student.health?.current_medication !== "None" ? "#fef3c7" : "white", borderRadius: 12, padding: 20, boxShadow: "0 2px 10px rgba(0,0,0,0.06)", border: student.health?.current_medication !== "None" ? "2px solid #f59e0b" : "none" }}>
             <h4 style={{ margin: "0 0 12px", color: "#92400e", fontSize: 14 }}>💊 Medication</h4>
             <p style={{ margin: 0, fontSize: 13, color: "#374151", lineHeight: 1.7 }}>{student.health?.current_medication || "No special medication."}</p>
           </div>
