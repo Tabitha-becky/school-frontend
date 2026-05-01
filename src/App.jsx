@@ -242,6 +242,24 @@ function Students({ students, searchQuery, setSearchQuery, openStudent, showAddS
     <div>
       <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
         <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search by name, admission no., or class..." style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 13, fontFamily: "inherit", outline: "none" }} />
+        <a href={`${BASE}/api/import/template?token=${localStorage.getItem('token')}`} target="_blank" style={{ background: "#7c3aed", color: "white", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, cursor: "pointer", fontFamily: "inherit", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>📥 Download Template</a>
+
+<label style={{ background: "#f59e0b", color: "white", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 6 }}>
+  📤 Import Excel
+  <input type="file" accept=".xlsx,.xls" style={{ display: "none" }} onChange={async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const res = await fetch(`${BASE}/api/import/students`, { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }, body: formData });
+      const data = await res.json();
+      alert(data.message + (data.data?.errors?.length ? '\n\nIssues:\n' + data.data.errors.join('\n') : ''));
+      if (data.success) window.location.reload();
+    } catch (err) { alert('Import failed'); }
+    e.target.value = '';
+  }} />
+</label>
         <a href={`${BASE}/api/students/export/excel?token=${localStorage.getItem("token")}&academic_year=${new Date().getFullYear()}`} target="_blank" style={{ background: "#16a34a", color: "white", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, cursor: "pointer", fontFamily: "inherit", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>📊 Export Excel</a>
         <button onClick={() => setShowAddStudent(true)} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>+ Add Student</button>
       </div>
