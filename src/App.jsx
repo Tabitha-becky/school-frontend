@@ -360,7 +360,17 @@ function StudentProfile({ student, tab, setTab, onBack, showAddPayment, setShowA
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button onClick={() => setShowEdit(true)} style={{ background: "#f59e0b", color: "white", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>✏️ Edit Student</button>
           <a href={`${BASE}/api/reports/id-card/${student.id}?token=${tkn}`} target="_blank" style={{ background: "#7c3aed", color: "white", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 12, cursor: "pointer", textDecoration: "none", fontFamily: "inherit" }}>🪪 ID Card</a>
-          {availableTerms.map(term => (
+         <button onClick={async () => {
+  if (!window.confirm(`Are you sure you want to deactivate ${student.name}? They will no longer appear in the system.`)) return;
+  try {
+    await api.delete("/students/" + student.id);
+    showToast ? showToast("Student deactivated!") : alert("Student deactivated!");
+    onBack();
+  } catch (err) {
+    alert("Failed to deactivate student");
+  }
+}} style={{ background: "#dc2626", color: "white", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>🗑️ Remove Student</button>
+         {availableTerms.map(term => (
             <a key={term} href={`${BASE}/api/reports/report-card/${student.id}?term=${encodeURIComponent(term)}&academic_year=${new Date().getFullYear()}&token=${tkn}`} target="_blank" style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 12, cursor: "pointer", textDecoration: "none", fontFamily: "inherit" }}>📄 {term}</a>
           ))}
         </div>
@@ -476,6 +486,8 @@ function StudentProfile({ student, tab, setTab, onBack, showAddPayment, setShowA
         </div>
       )}
       {tab === "health" && (
+  <HealthTab student={selectedStudent} onUpdated={onStudentUpdated} showToast={showToast} />
+)}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
           <InfoCard title="🩺 Health Details" items={[["Blood Group", student.health?.blood_group || "—"], ["Allergies", student.health?.allergies || "None"], ["Conditions", student.health?.chronic_conditions || "None"], ["Emergency Contact", student.health?.emergency_contact_phone || "—"]]} />
           <div style={{ background: student.health?.current_medication !== "None" ? "#fef3c7" : "white", borderRadius: 12, padding: 20, boxShadow: "0 2px 10px rgba(0,0,0,0.06)", border: student.health?.current_medication !== "None" ? "2px solid #f59e0b" : "none" }}>
@@ -483,7 +495,7 @@ function StudentProfile({ student, tab, setTab, onBack, showAddPayment, setShowA
             <p style={{ margin: 0, fontSize: 13, color: "#374151", lineHeight: 1.7 }}>{student.health?.current_medication || "No special medication."}</p>
           </div>
         </div>
-      )}
+      
       {showAddPayment && (
         <Modal title="💰 Record Fee Payment" onClose={() => setShowAddPayment(false)}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -1295,4 +1307,62 @@ function SchoolSettings({ showToast }) {
       )}
     </div>
   );
+  function HealthTab({ student, onUpdated, showToast }) {
+  const [showEdit, setShowEdit] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    blood_group: student.health?.blood_group || "Unknown",
+    allergies: student.health?.allergies || "None",
+    chronic_conditions: student.health?.chronic_conditions || "None",
+    current_medication: student.health?.current_medication || "None",
+    emergency_contact_phone: student.health?.emergency_contact_phone || "",
+  });
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await api.put("/health/" + student.id, form);
+      showToast("Health record updated!");
+      setShowEdit(false);
+      onUpdated();
+    } catch (err) {
+      showToast(err.response?.data?.message || "Failed to update", "error");
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+        <button onClick={() => setShowEdit(true)} style={{ background: "#f59e0b", color: "white", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>✏️ Edit Health Record</button>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        <InfoCard title="🩺 Health Details" items={[
+          ["Blood Group", student.health?.blood_group || "—"],
+          ["Allergies", student.health?.allergies || "None"],
+          ["Conditions", student.health?.chronic_conditions || "None"],
+          ["Emergency Contact", student.health?.emergency_contact_phone || "—"],
+        ]} />
+        <div style={{ background: student.health?.current_medication !== "None" ? "#fef3c7" : "white", borderRadius: 12, padding: 20, boxShadow: "0 2px 10px rgba(0,0,0,0.06)", border: student.health?.current_medication !== "None" ? "2px solid #f59e0b" : "none" }}>
+          <h4 style={{ margin: "0 0 12px", color: "#92400e", fontSize: 14 }}>💊 Medication</h4>
+          <p style={{ margin: 0, fontSize: 13, color: "#374151", lineHeight: 1.7 }}>{student.health?.current_medication || "No special medication."}</p>
+        </div>
+      </div>
+      {showEdit && (
+        <Modal title="🏥 Edit Health Record" onClose={() => setShowEdit(false)}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <SelectField label="Blood Group" value={form.blood_group} options={["A+","A-","B+","B-","AB+","AB-","O+","O-","Unknown"]} onChange={v => setForm({...form, blood_group: v})} />
+            <Field label="Emergency Contact Phone" value={form.emergency_contact_phone} onChange={v => setForm({...form, emergency_contact_phone: v})} placeholder="07XXXXXXXX" />
+            <Field label="Allergies" value={form.allergies} onChange={v => setForm({...form, allergies: v})} placeholder="e.g. Peanuts (or None)" />
+            <Field label="Chronic Conditions" value={form.chronic_conditions} onChange={v => setForm({...form, chronic_conditions: v})} placeholder="e.g. Asthma (or None)" />
+            <div style={{ gridColumn: "1/-1" }}><Field label="Current Medication" value={form.current_medication} onChange={v => setForm({...form, current_medication: v})} placeholder="e.g. Carries inhaler (or None)" /></div>
+          </div>
+          <div style={{ display: "flex", gap: 10, marginTop: 16, justifyContent: "flex-end" }}>
+            <button onClick={() => setShowEdit(false)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>Cancel</button>
+            <button onClick={handleSave} disabled={saving} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>{saving ? "Saving..." : "✓ Save Health Record"}</button>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
 }
