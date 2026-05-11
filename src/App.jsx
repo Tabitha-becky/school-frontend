@@ -234,6 +234,7 @@ function Dashboard({ stats, students, feeSummary, openStudent }) {
     </div>
   );
 }
+
 function Students({ students, searchQuery, setSearchQuery, openStudent, showAddStudent, setShowAddStudent, onAdd }) {
   const [form, setForm] = useState({ name: "", adm_no: "", class_id: "", gender: "Male", date_of_birth: "", parent_name: "", parent_phone: "", parent_email: "", address: "", blood_group: "O+", allergies: "None", chronic_conditions: "None", current_medication: "None", emergency_contact_phone: "" });
   const [classes, setClasses] = useState([]);
@@ -243,23 +244,22 @@ function Students({ students, searchQuery, setSearchQuery, openStudent, showAddS
       <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
         <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search by name, admission no., or class..." style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 13, fontFamily: "inherit", outline: "none" }} />
         <a href={`${BASE}/api/import/template?token=${localStorage.getItem('token')}`} target="_blank" style={{ background: "#7c3aed", color: "white", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, cursor: "pointer", fontFamily: "inherit", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>📥 Download Template</a>
-
-<label style={{ background: "#f59e0b", color: "white", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 6 }}>
-  📤 Import Excel
-  <input type="file" accept=".xlsx,.xls" style={{ display: "none" }} onChange={async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const formData = new FormData();
-    formData.append('file', file);
-    try {
-      const res = await fetch(`${BASE}/api/import/students`, { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }, body: formData });
-      const data = await res.json();
-      alert(data.message + (data.data?.errors?.length ? '\n\nIssues:\n' + data.data.errors.join('\n') : ''));
-      if (data.success) window.location.reload();
-    } catch (err) { alert('Import failed'); }
-    e.target.value = '';
-  }} />
-</label>
+        <label style={{ background: "#f59e0b", color: "white", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 6 }}>
+          📤 Import Excel
+          <input type="file" accept=".xlsx,.xls" style={{ display: "none" }} onChange={async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('file', file);
+            try {
+              const res = await fetch(`${BASE}/api/import/students`, { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }, body: formData });
+              const data = await res.json();
+              alert(data.message + (data.data?.errors?.length ? '\n\nIssues:\n' + data.data.errors.join('\n') : ''));
+              if (data.success) window.location.reload();
+            } catch (err) { alert('Import failed'); }
+            e.target.value = '';
+          }} />
+        </label>
         <a href={`${BASE}/api/students/export/excel?token=${localStorage.getItem("token")}&academic_year=${new Date().getFullYear()}`} target="_blank" style={{ background: "#16a34a", color: "white", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, cursor: "pointer", fontFamily: "inherit", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>📊 Export Excel</a>
         <button onClick={() => setShowAddStudent(true)} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>+ Add Student</button>
       </div>
@@ -321,7 +321,8 @@ function Students({ students, searchQuery, setSearchQuery, openStudent, showAddS
   );
 }
 
-function StudentProfile({ student, tab, setTab, onBack, showAddPayment, setShowAddPayment, onAddPayment, onStudentUpdated }) {
+// ─── FIX: showToast added to props, duplicate delete button removed ───
+function StudentProfile({ student, tab, setTab, onBack, showAddPayment, setShowAddPayment, onAddPayment, onStudentUpdated, showToast }) {
   const totalPaid = student.fees?.reduce((a, f) => a + parseFloat(f.amount_paid || 0), 0) || 0;
   const totalExpected = student.fees?.reduce((a, f) => a + parseFloat(f.amount_expected || 0), 0) || 0;
   const balance = totalExpected - totalPaid;
@@ -358,23 +359,15 @@ function StudentProfile({ student, tab, setTab, onBack, showAddPayment, setShowA
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
         <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", color: "#064e3b", fontSize: 13, fontFamily: "inherit" }}>← Back to Students</button>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-         <button onClick={async () => {
-  if (!window.confirm(`Remove ${student.name}? They will be hidden but data is kept.`)) return;
-  try { await api.delete("/students/" + student.id); showToast("Student removed!"); onBack(); }
-  catch (err) { showToast("Failed to remove student", "error"); }
-}} style={{ background: "#dc2626", color: "white", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>🗑️ Remove</button>
+          {/* FIX: only one delete button */}
+          <button onClick={async () => {
+            if (!window.confirm(`Remove ${student.name}? They will be hidden but data is kept.`)) return;
+            try { await api.delete("/students/" + student.id); showToast("Student removed!"); onBack(); }
+            catch (err) { showToast("Failed to remove student", "error"); }
+          }} style={{ background: "#dc2626", color: "white", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>🗑️ Remove Student</button>
           <button onClick={() => setShowEdit(true)} style={{ background: "#f59e0b", color: "white", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>✏️ Edit Student</button>
           <a href={`${BASE}/api/reports/id-card/${student.id}?token=${tkn}`} target="_blank" style={{ background: "#7c3aed", color: "white", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 12, cursor: "pointer", textDecoration: "none", fontFamily: "inherit" }}>🪪 ID Card</a>
-         <button onClick={async () => {
-  if (!window.confirm(`Are you sure you want to deactivate ${student.name}? They will no longer appear in the system.`)) return;
-  try {
-    await api.delete("/students/" + student.id);
-    showToast ? showToast("Student deactivated!") : alert("Student deactivated!");
-  } catch (err) {
-    alert("Failed to deactivate student");
-  }
-}} style={{ background: "#dc2626", color: "white", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>🗑️ Remove Student</button>
-         {availableTerms.map(term => (
+          {availableTerms.map(term => (
             <a key={term} href={`${BASE}/api/reports/report-card/${student.id}?term=${encodeURIComponent(term)}&academic_year=${new Date().getFullYear()}&token=${tkn}`} target="_blank" style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 12, cursor: "pointer", textDecoration: "none", fontFamily: "inherit" }}>📄 {term}</a>
           ))}
         </div>
@@ -400,12 +393,14 @@ function StudentProfile({ student, tab, setTab, onBack, showAddPayment, setShowA
           </button>
         ))}
       </div>
+
       {tab === "profile" && (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
           <InfoCard title="📋 Basic Information" items={[["Admission No.", student.adm_no], ["Class", student.class_name || "—"], ["Gender", student.gender], ["Date of Birth", student.date_of_birth ? student.date_of_birth.split("T")[0] : "—"], ["Address", student.address || "—"]]} />
           <InfoCard title="👨‍👩‍👧 Parent / Guardian" items={[["Name", student.parent_name || "—"], ["Phone", student.parent_phone], ["Email", student.parent_email || "—"]]} />
         </div>
       )}
+
       {tab === "fees" && (
         <div>
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
@@ -436,6 +431,7 @@ function StudentProfile({ student, tab, setTab, onBack, showAddPayment, setShowA
           </div>
         </div>
       )}
+
       {tab === "academics" && (
         <div>
           {student.academics && student.academics.length > 0 && (
@@ -489,17 +485,12 @@ function StudentProfile({ student, tab, setTab, onBack, showAddPayment, setShowA
           </div>
         </div>
       )}
+
+      {/* FIX: use student (prop) not selectedStudent, pass showToast */}
       {tab === "health" && (
-  <HealthTab student={selectedStudent} onUpdated={onStudentUpdated} showToast={showToast} />
-)}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-          <InfoCard title="🩺 Health Details" items={[["Blood Group", student.health?.blood_group || "—"], ["Allergies", student.health?.allergies || "None"], ["Conditions", student.health?.chronic_conditions || "None"], ["Emergency Contact", student.health?.emergency_contact_phone || "—"]]} />
-          <div style={{ background: student.health?.current_medication !== "None" ? "#fef3c7" : "white", borderRadius: 12, padding: 20, boxShadow: "0 2px 10px rgba(0,0,0,0.06)", border: student.health?.current_medication !== "None" ? "2px solid #f59e0b" : "none" }}>
-            <h4 style={{ margin: "0 0 12px", color: "#92400e", fontSize: 14 }}>💊 Medication</h4>
-            <p style={{ margin: 0, fontSize: 13, color: "#374151", lineHeight: 1.7 }}>{student.health?.current_medication || "No special medication."}</p>
-          </div>
-        </div>
-      
+        <HealthTab student={student} onUpdated={onStudentUpdated} showToast={showToast} />
+      )}
+
       {showAddPayment && (
         <Modal title="💰 Record Fee Payment" onClose={() => setShowAddPayment(false)}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -543,6 +534,66 @@ function StudentProfile({ student, tab, setTab, onBack, showAddPayment, setShowA
           <div style={{ display: "flex", gap: 10, marginTop: 16, justifyContent: "flex-end" }}>
             <button onClick={() => setShowEdit(false)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>Cancel</button>
             <button onClick={handleSaveEdit} disabled={saving} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>{saving ? "Saving..." : "✓ Save Changes"}</button>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ─── FIX: HealthTab is now a top-level component, NOT inside SchoolSettings ───
+function HealthTab({ student, onUpdated, showToast }) {
+  const [showEdit, setShowEdit] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    blood_group: student.health?.blood_group || "Unknown",
+    allergies: student.health?.allergies || "None",
+    chronic_conditions: student.health?.chronic_conditions || "None",
+    current_medication: student.health?.current_medication || "None",
+    emergency_contact_phone: student.health?.emergency_contact_phone || "",
+  });
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await api.put("/health/" + student.id, form);
+      showToast("Health record updated!");
+      setShowEdit(false);
+      onUpdated();
+    } catch (err) {
+      showToast(err.response?.data?.message || "Failed to update", "error");
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+        <button onClick={() => setShowEdit(true)} style={{ background: "#f59e0b", color: "white", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>✏️ Edit Health Record</button>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        <InfoCard title="🩺 Health Details" items={[
+          ["Blood Group", student.health?.blood_group || "—"],
+          ["Allergies", student.health?.allergies || "None"],
+          ["Conditions", student.health?.chronic_conditions || "None"],
+          ["Emergency Contact", student.health?.emergency_contact_phone || "—"],
+        ]} />
+        <div style={{ background: student.health?.current_medication !== "None" ? "#fef3c7" : "white", borderRadius: 12, padding: 20, boxShadow: "0 2px 10px rgba(0,0,0,0.06)", border: student.health?.current_medication !== "None" ? "2px solid #f59e0b" : "none" }}>
+          <h4 style={{ margin: "0 0 12px", color: "#92400e", fontSize: 14 }}>💊 Medication</h4>
+          <p style={{ margin: 0, fontSize: 13, color: "#374151", lineHeight: 1.7 }}>{student.health?.current_medication || "No special medication."}</p>
+        </div>
+      </div>
+      {showEdit && (
+        <Modal title="🏥 Edit Health Record" onClose={() => setShowEdit(false)}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <SelectField label="Blood Group" value={form.blood_group} options={["A+","A-","B+","B-","AB+","AB-","O+","O-","Unknown"]} onChange={v => setForm({...form, blood_group: v})} />
+            <Field label="Emergency Contact Phone" value={form.emergency_contact_phone} onChange={v => setForm({...form, emergency_contact_phone: v})} placeholder="07XXXXXXXX" />
+            <Field label="Allergies" value={form.allergies} onChange={v => setForm({...form, allergies: v})} placeholder="e.g. Peanuts (or None)" />
+            <Field label="Chronic Conditions" value={form.chronic_conditions} onChange={v => setForm({...form, chronic_conditions: v})} placeholder="e.g. Asthma (or None)" />
+            <div style={{ gridColumn: "1/-1" }}><Field label="Current Medication" value={form.current_medication} onChange={v => setForm({...form, current_medication: v})} placeholder="e.g. Carries inhaler (or None)" /></div>
+          </div>
+          <div style={{ display: "flex", gap: 10, marginTop: 16, justifyContent: "flex-end" }}>
+            <button onClick={() => setShowEdit(false)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>Cancel</button>
+            <button onClick={handleSave} disabled={saving} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>{saving ? "Saving..." : "✓ Save Health Record"}</button>
           </div>
         </Modal>
       )}
@@ -1103,54 +1154,6 @@ function StaffAccounts({ showToast }) {
   );
 }
 
-function InfoCard({ title, items }) {
-  return (
-    <div style={{ background: "white", borderRadius: 12, padding: 20, boxShadow: "0 2px 10px rgba(0,0,0,0.06)" }}>
-      <h4 style={{ margin: "0 0 14px", color: "#064e3b", fontSize: 14 }}>{title}</h4>
-      {items.map(([label, value]) => (
-        <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #f3f4f6", fontSize: 13 }}>
-          <span style={{ color: "#6b7280" }}>{label}</span>
-          <span style={{ color: "#111", fontWeight: "bold" }}>{value}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function Modal({ title, onClose, children }) {
-  return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div style={{ background: "white", borderRadius: 14, padding: 24, width: "100%", maxWidth: 640, maxHeight: "90vh", overflow: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <h3 style={{ margin: 0, color: "#064e3b", fontSize: 16 }}>{title}</h3>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: "#9ca3af" }}>✕</button>
-        </div>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function Field({ label, value, onChange, type = "text", placeholder = "" }) {
-  return (
-    <div>
-      <label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>{label}</label>
-      <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #d1d5db", fontSize: 12, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
-    </div>
-  );
-}
-
-function SelectField({ label, value, options, onChange }) {
-  return (
-    <div>
-      <label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>{label}</label>
-      <select value={value} onChange={e => onChange(e.target.value)} style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #d1d5db", fontSize: 12, fontFamily: "inherit", outline: "none", background: "white" }}>
-        {options.map(o => <option key={o}>{o}</option>)}
-      </select>
-    </div>
-  );
-}
-
 function SchoolSettings({ showToast }) {
   const [terms, setTerms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1215,7 +1218,7 @@ function SchoolSettings({ showToast }) {
       )}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <div style={{ padding: 14, background: "#e0f2fe", borderRadius: 8, border: "1px solid #7dd3fc", fontSize: 13, color: "#0369a1", flex: 1, marginRight: 16 }}>
-          Set your school term dates including half term breaks. The system auto-detects the current term based on today date.
+          Set your school term dates including half term breaks. The system auto-detects the current term based on today's date.
         </div>
         <button onClick={() => setShowAdd(true)} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>+ Add Term</button>
       </div>
@@ -1311,62 +1314,52 @@ function SchoolSettings({ showToast }) {
       )}
     </div>
   );
-  function HealthTab({ student, onUpdated, showToast }) {
-  const [showEdit, setShowEdit] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({
-    blood_group: student.health?.blood_group || "Unknown",
-    allergies: student.health?.allergies || "None",
-    chronic_conditions: student.health?.chronic_conditions || "None",
-    current_medication: student.health?.current_medication || "None",
-    emergency_contact_phone: student.health?.emergency_contact_phone || "",
-  });
+}
 
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await api.put("/health/" + student.id, form);
-      showToast("Health record updated!");
-      setShowEdit(false);
-      onUpdated();
-    } catch (err) {
-      showToast(err.response?.data?.message || "Failed to update", "error");
-    } finally { setSaving(false); }
-  };
-
+function InfoCard({ title, items }) {
   return (
-    <div>
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-        <button onClick={() => setShowEdit(true)} style={{ background: "#f59e0b", color: "white", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>✏️ Edit Health Record</button>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <InfoCard title="🩺 Health Details" items={[
-          ["Blood Group", student.health?.blood_group || "—"],
-          ["Allergies", student.health?.allergies || "None"],
-          ["Conditions", student.health?.chronic_conditions || "None"],
-          ["Emergency Contact", student.health?.emergency_contact_phone || "—"],
-        ]} />
-        <div style={{ background: student.health?.current_medication !== "None" ? "#fef3c7" : "white", borderRadius: 12, padding: 20, boxShadow: "0 2px 10px rgba(0,0,0,0.06)", border: student.health?.current_medication !== "None" ? "2px solid #f59e0b" : "none" }}>
-          <h4 style={{ margin: "0 0 12px", color: "#92400e", fontSize: 14 }}>💊 Medication</h4>
-          <p style={{ margin: 0, fontSize: 13, color: "#374151", lineHeight: 1.7 }}>{student.health?.current_medication || "No special medication."}</p>
+    <div style={{ background: "white", borderRadius: 12, padding: 20, boxShadow: "0 2px 10px rgba(0,0,0,0.06)" }}>
+      <h4 style={{ margin: "0 0 14px", color: "#064e3b", fontSize: 14 }}>{title}</h4>
+      {items.map(([label, value]) => (
+        <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #f3f4f6", fontSize: 13 }}>
+          <span style={{ color: "#6b7280" }}>{label}</span>
+          <span style={{ color: "#111", fontWeight: "bold" }}>{value}</span>
         </div>
-      </div>
-      {showEdit && (
-        <Modal title="🏥 Edit Health Record" onClose={() => setShowEdit(false)}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <SelectField label="Blood Group" value={form.blood_group} options={["A+","A-","B+","B-","AB+","AB-","O+","O-","Unknown"]} onChange={v => setForm({...form, blood_group: v})} />
-            <Field label="Emergency Contact Phone" value={form.emergency_contact_phone} onChange={v => setForm({...form, emergency_contact_phone: v})} placeholder="07XXXXXXXX" />
-            <Field label="Allergies" value={form.allergies} onChange={v => setForm({...form, allergies: v})} placeholder="e.g. Peanuts (or None)" />
-            <Field label="Chronic Conditions" value={form.chronic_conditions} onChange={v => setForm({...form, chronic_conditions: v})} placeholder="e.g. Asthma (or None)" />
-            <div style={{ gridColumn: "1/-1" }}><Field label="Current Medication" value={form.current_medication} onChange={v => setForm({...form, current_medication: v})} placeholder="e.g. Carries inhaler (or None)" /></div>
-          </div>
-          <div style={{ display: "flex", gap: 10, marginTop: 16, justifyContent: "flex-end" }}>
-            <button onClick={() => setShowEdit(false)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>Cancel</button>
-            <button onClick={handleSave} disabled={saving} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>{saving ? "Saving..." : "✓ Save Health Record"}</button>
-          </div>
-        </Modal>
-      )}
+      ))}
     </div>
   );
 }
+
+function Modal({ title, onClose, children }) {
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div style={{ background: "white", borderRadius: 14, padding: 24, width: "100%", maxWidth: 640, maxHeight: "90vh", overflow: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <h3 style={{ margin: 0, color: "#064e3b", fontSize: 16 }}>{title}</h3>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: "#9ca3af" }}>✕</button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, value, onChange, type = "text", placeholder = "" }) {
+  return (
+    <div>
+      <label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>{label}</label>
+      <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #d1d5db", fontSize: 12, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
+    </div>
+  );
+}
+
+function SelectField({ label, value, options, onChange }) {
+  return (
+    <div>
+      <label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>{label}</label>
+      <select value={value} onChange={e => onChange(e.target.value)} style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #d1d5db", fontSize: 12, fontFamily: "inherit", outline: "none", background: "white" }}>
+        {options.map(o => <option key={o}>{o}</option>)}
+      </select>S
+    </div>
+  );
 }
