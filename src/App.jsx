@@ -370,7 +370,6 @@ function StudentProfile({ student, tab, setTab, onBack, showAddPayment, setShowA
   try {
     await api.delete("/students/" + student.id);
     showToast ? showToast("Student deactivated!") : alert("Student deactivated!");
-    onBack();
   } catch (err) {
     alert("Failed to deactivate student");
   }
