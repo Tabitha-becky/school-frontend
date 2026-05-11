@@ -137,7 +137,7 @@ export default function App() {
         <div style={{ flex: 1, padding: 24, overflow: "auto" }}>
           {page === "dashboard" && <Dashboard stats={stats} students={students} feeSummary={feeSummary} openStudent={loadStudentDetails} />}
           {page === "students" && <Students students={filteredStudents} searchQuery={searchQuery} setSearchQuery={setSearchQuery} openStudent={loadStudentDetails} showAddStudent={showAddStudent} setShowAddStudent={setShowAddStudent} onAdd={async (form) => { try { await api.post("/students", form); showToast(`${form.name} registered!`); setShowAddStudent(false); loadStudents(); } catch(e) { showToast(e.response?.data?.message || "Failed", "error"); }}} />}
-          {page === "student" && selectedStudent && <StudentProfile student={selectedStudent} tab={studentTab} setTab={setStudentTab} onBack={() => { setPage("students"); setSelectedStudent(null); }} showAddPayment={showAddPayment} setShowAddPayment={setShowAddPayment} onStudentUpdated={() => loadStudentDetails(selectedStudent.id)} onAddPayment={async (payment) => { try { await api.post("/fees/payment", { ...payment, student_id: selectedStudent.id }); showToast("Payment recorded!"); setShowAddPayment(false); loadStudentDetails(selectedStudent.id); loadFeeSummary(); } catch(e) { showToast(e.response?.data?.message || "Failed", "error"); }}} />}
+          {page === "student" && selectedStudent && <StudentProfile student={selectedStudent} tab={studentTab} setTab={setStudentTab} onBack={() => { setPage("students"); setSelectedStudent(null); }} showAddPayment={showAddPayment} setShowAddPayment={setShowAddPayment} showToast={showToast} onStudentUpdated={() => loadStudentDetails(selectedStudent.id)} onAddPayment={async (payment) => { try { await api.post("/fees/payment", { ...payment, student_id: selectedStudent.id }); showToast("Payment recorded!"); setShowAddPayment(false); loadStudentDetails(selectedStudent.id); loadFeeSummary(); } catch(e) { showToast(e.response?.data?.message || "Failed", "error"); }}} />}
           {page === "fees" && <FeeOverview students={students} feeSummary={feeSummary} openStudent={loadStudentDetails} />}
           {page === "feestructure" && <FeeStructure showToast={showToast} />}
           {page === "academics" && <Academics students={students} openStudent={loadStudentDetails} />}
@@ -358,6 +358,11 @@ function StudentProfile({ student, tab, setTab, onBack, showAddPayment, setShowA
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
         <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", color: "#064e3b", fontSize: 13, fontFamily: "inherit" }}>← Back to Students</button>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+         <button onClick={async () => {
+  if (!window.confirm(`Remove ${student.name}? They will be hidden but data is kept.`)) return;
+  try { await api.delete("/students/" + student.id); showToast("Student removed!"); onBack(); }
+  catch (err) { showToast("Failed to remove student", "error"); }
+}} style={{ background: "#dc2626", color: "white", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>🗑️ Remove</button>
           <button onClick={() => setShowEdit(true)} style={{ background: "#f59e0b", color: "white", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>✏️ Edit Student</button>
           <a href={`${BASE}/api/reports/id-card/${student.id}?token=${tkn}`} target="_blank" style={{ background: "#7c3aed", color: "white", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 12, cursor: "pointer", textDecoration: "none", fontFamily: "inherit" }}>🪪 ID Card</a>
          <button onClick={async () => {
