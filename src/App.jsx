@@ -136,7 +136,7 @@ export default function App() {
         </header>
         <div style={{ flex: 1, padding: 24, overflow: "auto" }}>
           {page === "dashboard" && <Dashboard stats={stats} students={students} feeSummary={feeSummary} openStudent={loadStudentDetails} />}
-          {page === "students" && <Students students={filteredStudents} searchQuery={searchQuery} setSearchQuery={setSearchQuery} openStudent={loadStudentDetails} showAddStudent={showAddStudent} setShowAddStudent={setShowAddStudent} onAdd={async (form) => { try { await api.post("/students", form); showToast(`${form.name} registered!`); setShowAddStudent(false); loadStudents(); } catch(e) { showToast(e.response?.data?.message || "Failed", "error"); }}} />}
+          {page === "students" && <Students students={filteredStudents} searchQuery={searchQuery} setSearchQuery={setSearchQuery} openStudent={loadStudentDetails} showAddStudent={showAddStudent} setShowAddStudent={setShowAddStudent} onAdd={async (form) => { try { await api.post("/students", form); showToast(`${form.name} registered!`); setShowAddStudent(false); loadStudents(); loadFeeSummary(); } catch(e) { showToast(e.response?.data?.message || "Failed", "error"); }}} />}
           {page === "student" && selectedStudent && <StudentProfile student={selectedStudent} tab={studentTab} setTab={setStudentTab} onBack={() => { setPage("students"); setSelectedStudent(null); }} showAddPayment={showAddPayment} setShowAddPayment={setShowAddPayment} showToast={showToast} onStudentUpdated={() => loadStudentDetails(selectedStudent.id)} onAddPayment={async (payment) => { try { await api.post("/fees/payment", { ...payment, student_id: selectedStudent.id }); showToast("Payment recorded!"); setShowAddPayment(false); loadStudentDetails(selectedStudent.id); loadFeeSummary(); } catch(e) { showToast(e.response?.data?.message || "Failed", "error"); }}} />}
           {page === "fees" && <FeeOverview students={students} feeSummary={feeSummary} openStudent={loadStudentDetails} />}
           {page === "feestructure" && <FeeStructure showToast={showToast} />}
@@ -321,7 +321,6 @@ function Students({ students, searchQuery, setSearchQuery, openStudent, showAddS
   );
 }
 
-// ─── FIX: showToast added to props, duplicate delete button removed ───
 function StudentProfile({ student, tab, setTab, onBack, showAddPayment, setShowAddPayment, onAddPayment, onStudentUpdated, showToast }) {
   const totalPaid = student.fees?.reduce((a, f) => a + parseFloat(f.amount_paid || 0), 0) || 0;
   const totalExpected = student.fees?.reduce((a, f) => a + parseFloat(f.amount_expected || 0), 0) || 0;
@@ -359,7 +358,6 @@ function StudentProfile({ student, tab, setTab, onBack, showAddPayment, setShowA
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
         <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", color: "#064e3b", fontSize: 13, fontFamily: "inherit" }}>← Back to Students</button>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {/* FIX: only one delete button */}
           <button onClick={async () => {
             if (!window.confirm(`Remove ${student.name}? They will be hidden but data is kept.`)) return;
             try { await api.delete("/students/" + student.id); showToast("Student removed!"); onBack(); }
@@ -393,14 +391,12 @@ function StudentProfile({ student, tab, setTab, onBack, showAddPayment, setShowA
           </button>
         ))}
       </div>
-
       {tab === "profile" && (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
           <InfoCard title="📋 Basic Information" items={[["Admission No.", student.adm_no], ["Class", student.class_name || "—"], ["Gender", student.gender], ["Date of Birth", student.date_of_birth ? student.date_of_birth.split("T")[0] : "—"], ["Address", student.address || "—"]]} />
           <InfoCard title="👨‍👩‍👧 Parent / Guardian" items={[["Name", student.parent_name || "—"], ["Phone", student.parent_phone], ["Email", student.parent_email || "—"]]} />
         </div>
       )}
-
       {tab === "fees" && (
         <div>
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
@@ -431,7 +427,6 @@ function StudentProfile({ student, tab, setTab, onBack, showAddPayment, setShowA
           </div>
         </div>
       )}
-
       {tab === "academics" && (
         <div>
           {student.academics && student.academics.length > 0 && (
@@ -485,12 +480,9 @@ function StudentProfile({ student, tab, setTab, onBack, showAddPayment, setShowA
           </div>
         </div>
       )}
-
-      {/* FIX: use student (prop) not selectedStudent, pass showToast */}
       {tab === "health" && (
         <HealthTab student={student} onUpdated={onStudentUpdated} showToast={showToast} />
       )}
-
       {showAddPayment && (
         <Modal title="💰 Record Fee Payment" onClose={() => setShowAddPayment(false)}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -541,7 +533,6 @@ function StudentProfile({ student, tab, setTab, onBack, showAddPayment, setShowA
   );
 }
 
-// ─── FIX: HealthTab is now a top-level component, NOT inside SchoolSettings ───
 function HealthTab({ student, onUpdated, showToast }) {
   const [showEdit, setShowEdit] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -552,31 +543,19 @@ function HealthTab({ student, onUpdated, showToast }) {
     current_medication: student.health?.current_medication || "None",
     emergency_contact_phone: student.health?.emergency_contact_phone || "",
   });
-
   const handleSave = async () => {
     setSaving(true);
-    try {
-      await api.put("/health/" + student.id, form);
-      showToast("Health record updated!");
-      setShowEdit(false);
-      onUpdated();
-    } catch (err) {
-      showToast(err.response?.data?.message || "Failed to update", "error");
-    } finally { setSaving(false); }
+    try { await api.put("/health/" + student.id, form); showToast("Health record updated!"); setShowEdit(false); onUpdated(); }
+    catch (err) { showToast(err.response?.data?.message || "Failed to update", "error"); }
+    finally { setSaving(false); }
   };
-
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
         <button onClick={() => setShowEdit(true)} style={{ background: "#f59e0b", color: "white", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>✏️ Edit Health Record</button>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <InfoCard title="🩺 Health Details" items={[
-          ["Blood Group", student.health?.blood_group || "—"],
-          ["Allergies", student.health?.allergies || "None"],
-          ["Conditions", student.health?.chronic_conditions || "None"],
-          ["Emergency Contact", student.health?.emergency_contact_phone || "—"],
-        ]} />
+        <InfoCard title="🩺 Health Details" items={[["Blood Group", student.health?.blood_group || "—"], ["Allergies", student.health?.allergies || "None"], ["Conditions", student.health?.chronic_conditions || "None"], ["Emergency Contact", student.health?.emergency_contact_phone || "—"]]} />
         <div style={{ background: student.health?.current_medication !== "None" ? "#fef3c7" : "white", borderRadius: 12, padding: 20, boxShadow: "0 2px 10px rgba(0,0,0,0.06)", border: student.health?.current_medication !== "None" ? "2px solid #f59e0b" : "none" }}>
           <h4 style={{ margin: "0 0 12px", color: "#92400e", fontSize: 14 }}>💊 Medication</h4>
           <p style={{ margin: 0, fontSize: 13, color: "#374151", lineHeight: 1.7 }}>{student.health?.current_medication || "No special medication."}</p>
@@ -609,40 +588,31 @@ function FeeStructure({ showToast }) {
   const [generating, setGenerating] = useState(false);
   const [terms, setTerms] = useState([]);
   const [form, setForm] = useState({ class_id: "", term: "", academic_year: String(new Date().getFullYear()), tuition_fee: "", activity_fee: "", boarding_fee: "", other_fee: "" });
-
   const loadData = async () => {
     try {
       const [cls, str, termRes] = await Promise.all([api.get("/academics/classes"), api.get("/fees/structure?academic_year=" + new Date().getFullYear()), api.get("/settings/terms")]);
-      setClasses(cls.data.data || []);
-      setStructures(str.data.data || []);
-      const allTerms = termRes.data.data || [];
-      setTerms(allTerms.map(t => t.term));
+      setClasses(cls.data.data || []); setStructures(str.data.data || []);
+      const allTerms = termRes.data.data || []; setTerms(allTerms.map(t => t.term));
       const cur = allTerms.find(t => t.is_current);
       if (cur) setForm(prev => ({ ...prev, term: cur.term }));
     } catch (err) { showToast("Failed to load data", "error"); }
   };
-
   useEffect(() => { loadData(); }, []);
-
   const handleSave = async () => {
     if (!form.class_id || !form.term || !form.tuition_fee) { showToast("Class, term and tuition fee are required", "error"); return; }
     setSaving(true);
     try {
       await api.post("/fees/structure", { ...form, tuition_fee: parseFloat(form.tuition_fee || 0), activity_fee: parseFloat(form.activity_fee || 0), boarding_fee: parseFloat(form.boarding_fee || 0), other_fee: parseFloat(form.other_fee || 0) });
-      showToast("Fee structure saved!");
-      setShowAdd(false);
-      setForm(prev => ({ ...prev, class_id: "", tuition_fee: "", activity_fee: "", boarding_fee: "", other_fee: "" }));
-      loadData();
+      showToast("Fee structure saved!"); setShowAdd(false);
+      setForm(prev => ({ ...prev, class_id: "", tuition_fee: "", activity_fee: "", boarding_fee: "", other_fee: "" })); loadData();
     } catch (err) { showToast(err.response?.data?.message || "Failed to save", "error"); }
     finally { setSaving(false); }
   };
-
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this fee structure?")) return;
     try { await api.delete("/fees/structure/" + id); showToast("Deleted!"); loadData(); }
     catch (err) { showToast("Failed to delete", "error"); }
   };
-
   const handleGenerate = async () => {
     const term = window.prompt("Enter term to generate fees for e.g. " + (terms[0] || "Term 1 2025"));
     if (!term) return;
@@ -651,16 +621,12 @@ function FeeStructure({ showToast }) {
     catch (err) { showToast(err.response?.data?.message || "Failed to generate", "error"); }
     finally { setGenerating(false); }
   };
-
   const grouped = {};
   structures.forEach(s => { if (!grouped[s.class_name]) grouped[s.class_name] = []; grouped[s.class_name].push(s); });
-
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <div style={{ padding: 14, background: "#e0f2fe", borderRadius: 8, border: "1px solid #7dd3fc", fontSize: 13, color: "#0369a1", flex: 1, marginRight: 16 }}>
-          🏷️ Set fees per class per term. Then click <strong>⚡ Generate Fee Records</strong> to auto-create fee records for all students.
-        </div>
+        <div style={{ padding: 14, background: "#e0f2fe", borderRadius: 8, border: "1px solid #7dd3fc", fontSize: 13, color: "#0369a1", flex: 1, marginRight: 16 }}>🏷️ Set fees per class per term. Then click <strong>⚡ Generate Fee Records</strong> to auto-create fee records for all students.</div>
         <div style={{ display: "flex", gap: 8 }}>
           <button onClick={handleGenerate} disabled={generating} style={{ background: "#1d4ed8", color: "white", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>{generating ? "Generating..." : "⚡ Generate Fee Records"}</button>
           <button onClick={() => setShowAdd(true)} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>+ Set Fees</button>
@@ -710,9 +676,7 @@ function FeeStructure({ showToast }) {
             <Field label="Boarding Fee (KES)" type="number" value={form.boarding_fee} onChange={v => setForm({...form, boarding_fee: v})} placeholder="e.g. 0" />
             <Field label="Other Fee (KES)" type="number" value={form.other_fee} onChange={v => setForm({...form, other_fee: v})} placeholder="e.g. 500" />
           </div>
-          <div style={{ marginTop: 12, padding: 12, background: "#f0fdf4", borderRadius: 8, fontSize: 12, color: "#065f46" }}>
-            Total = {fmtKES(parseFloat(form.tuition_fee||0) + parseFloat(form.activity_fee||0) + parseFloat(form.boarding_fee||0) + parseFloat(form.other_fee||0))}
-          </div>
+          <div style={{ marginTop: 12, padding: 12, background: "#f0fdf4", borderRadius: 8, fontSize: 12, color: "#065f46" }}>Total = {fmtKES(parseFloat(form.tuition_fee||0) + parseFloat(form.activity_fee||0) + parseFloat(form.boarding_fee||0) + parseFloat(form.other_fee||0))}</div>
           <div style={{ display: "flex", gap: 10, marginTop: 16, justifyContent: "flex-end" }}>
             <button onClick={() => setShowAdd(false)} style={{ background: "#f3f4f6", border: "none", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>Cancel</button>
             <button onClick={handleSave} disabled={saving} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>{saving ? "Saving..." : "✓ Save Fee Structure"}</button>
@@ -822,18 +786,11 @@ function MarksEntry({ showToast }) {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [terms, setTerms] = useState([]);
-
   useEffect(() => {
     api.get("/academics/classes").then(res => setClasses(res.data.data || [])).catch(() => {});
     api.get("/academics/subjects").then(res => setSubjects(res.data.data || [])).catch(() => {});
-    api.get("/settings/terms").then(res => {
-      const t = res.data.data || [];
-      setTerms(t.map(x => x.term));
-      const cur = t.find(x => x.is_current);
-      if (cur) setSelectedTerm(cur.term);
-    }).catch(() => {});
+    api.get("/settings/terms").then(res => { const t = res.data.data || []; setTerms(t.map(x => x.term)); const cur = t.find(x => x.is_current); if (cur) setSelectedTerm(cur.term); }).catch(() => {});
   }, []);
-
   useEffect(() => {
     if (!selectedClass) return;
     setLoading(true);
@@ -844,46 +801,24 @@ function MarksEntry({ showToast }) {
       setMarks(initialMarks);
     }).finally(() => setLoading(false));
   }, [selectedClass]);
-
   const getAvg = (m) => Math.round((parseFloat(m.cat1 || 0) + parseFloat(m.cat2 || 0) + parseFloat(m.exam || 0)) / 3);
-
   const handleSave = async () => {
     if (!selectedClass || !selectedSubject || !selectedTerm) { showToast("Please select class, subject and term first", "error"); return; }
     setSaving(true);
     try {
       const records = students.map(s => ({ student_id: s.id, subject_id: selectedSubject, class_id: selectedClass, term: selectedTerm, academic_year: String(new Date().getFullYear()), cat1: parseFloat(marks[s.id]?.cat1 || 0), cat2: parseFloat(marks[s.id]?.cat2 || 0), exam: parseFloat(marks[s.id]?.exam || 0) }));
-      await api.post("/academics/marks", { records });
-      showToast("Marks saved successfully!");
+      await api.post("/academics/marks", { records }); showToast("Marks saved successfully!");
     } catch (err) { showToast("Failed to save marks", "error"); }
     finally { setSaving(false); }
   };
-
   return (
     <div>
       <div style={{ background: "white", borderRadius: 12, padding: 20, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", marginBottom: 20 }}>
         <h3 style={{ margin: "0 0 16px", color: "#064e3b", fontSize: 15 }}>✏️ Marks Entry Form</h3>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-          <div>
-            <label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>Select Class</label>
-            <select value={selectedClass} onChange={e => setSelectedClass(e.target.value)} style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 13, fontFamily: "inherit", outline: "none", background: "white" }}>
-              <option value="">-- Select Class --</option>
-              {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>Select Subject</label>
-            <select value={selectedSubject} onChange={e => setSelectedSubject(e.target.value)} style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 13, fontFamily: "inherit", outline: "none", background: "white" }}>
-              <option value="">-- Select Subject --</option>
-              {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>Select Term</label>
-            <select value={selectedTerm} onChange={e => setSelectedTerm(e.target.value)} style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 13, fontFamily: "inherit", outline: "none", background: "white" }}>
-              <option value="">-- Select Term --</option>
-              {terms.map(t => <option key={t}>{t}</option>)}
-            </select>
-          </div>
+          <div><label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>Select Class</label><select value={selectedClass} onChange={e => setSelectedClass(e.target.value)} style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 13, fontFamily: "inherit", outline: "none", background: "white" }}><option value="">-- Select Class --</option>{classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+          <div><label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>Select Subject</label><select value={selectedSubject} onChange={e => setSelectedSubject(e.target.value)} style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 13, fontFamily: "inherit", outline: "none", background: "white" }}><option value="">-- Select Subject --</option>{subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
+          <div><label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>Select Term</label><select value={selectedTerm} onChange={e => setSelectedTerm(e.target.value)} style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 13, fontFamily: "inherit", outline: "none", background: "white" }}><option value="">-- Select Term --</option>{terms.map(t => <option key={t}>{t}</option>)}</select></div>
         </div>
       </div>
       {loading && <div style={{ textAlign: "center", padding: 40, color: "#9ca3af" }}>Loading students...</div>}
@@ -894,17 +829,12 @@ function MarksEntry({ showToast }) {
             <tbody>
               {students.map((s, i) => {
                 const m = marks[s.id] || { cat1: "", cat2: "", exam: "" };
-                const avg = getAvg(m);
-                const { grade, color } = getGrade(avg);
+                const avg = getAvg(m); const { grade, color } = getGrade(avg);
                 return (
                   <tr key={s.id} style={{ background: i % 2 === 0 ? "white" : "#f9fafb" }}>
                     <td style={{ padding: "10px 16px", fontSize: 12, color: "#6b7280" }}>{s.adm_no}</td>
                     <td style={{ padding: "10px 16px", fontSize: 13, fontWeight: "bold" }}>{s.name}</td>
-                    {["cat1","cat2","exam"].map(field => (
-                      <td key={field} style={{ padding: "6px 10px", textAlign: "center" }}>
-                        <input type="number" min="0" max="100" value={m[field]} onChange={e => setMarks(prev => ({ ...prev, [s.id]: { ...prev[s.id], [field]: e.target.value } }))} style={{ width: 65, padding: "6px 8px", borderRadius: 6, border: "1px solid #d1d5db", fontSize: 13, textAlign: "center", fontFamily: "inherit", outline: "none" }} />
-                      </td>
-                    ))}
+                    {["cat1","cat2","exam"].map(field => (<td key={field} style={{ padding: "6px 10px", textAlign: "center" }}><input type="number" min="0" max="100" value={m[field]} onChange={e => setMarks(prev => ({ ...prev, [s.id]: { ...prev[s.id], [field]: e.target.value } }))} style={{ width: 65, padding: "6px 8px", borderRadius: 6, border: "1px solid #d1d5db", fontSize: 13, textAlign: "center", fontFamily: "inherit", outline: "none" }} /></td>))}
                     <td style={{ padding: "10px 16px", textAlign: "center", fontWeight: "bold", fontSize: 14, color: "#064e3b" }}>{(m.cat1 || m.cat2 || m.exam) ? avg + "%" : "—"}</td>
                     <td style={{ padding: "10px 16px", textAlign: "center" }}>{(m.cat1 || m.cat2 || m.exam) ? <span style={{ background: color, color: "white", padding: "2px 10px", borderRadius: 10, fontSize: 12, fontWeight: "bold" }}>{grade}</span> : "—"}</td>
                   </tr>
@@ -934,37 +864,28 @@ function Attendance({ showToast }) {
   const [reportMonth, setReportMonth] = useState(new Date().toISOString().slice(0, 7));
   const [reportData, setReportData] = useState([]);
   const [activeTab, setActiveTab] = useState("mark");
-
   useEffect(() => { api.get("/academics/classes").then(res => setClasses(res.data.data || [])).catch(() => {}); }, []);
   useEffect(() => {
     if (!selectedClass) return;
     setLoading(true);
     api.get(`/attendance/class/${selectedClass}?date=${selectedDate}`).then(res => setStudents(res.data.data || [])).catch(() => showToast("Failed to load attendance", "error")).finally(() => setLoading(false));
   }, [selectedClass, selectedDate]);
-
   const setStatus = (studentId, status) => setStudents(prev => prev.map(s => s.id === studentId ? { ...s, status } : s));
   const markAll = (status) => setStudents(prev => prev.map(s => ({ ...s, status })));
-
   const handleSave = async () => {
     if (!selectedClass) { showToast("Select a class first", "error"); return; }
     setSaving(true);
-    try {
-      const records = students.map(s => ({ student_id: s.id, status: s.status || "present" }));
-      await api.post("/attendance/save", { records, class_id: selectedClass, date: selectedDate });
-      showToast("Attendance saved successfully!");
-    } catch (err) { showToast("Failed to save attendance", "error"); }
+    try { const records = students.map(s => ({ student_id: s.id, status: s.status || "present" })); await api.post("/attendance/save", { records, class_id: selectedClass, date: selectedDate }); showToast("Attendance saved successfully!"); }
+    catch (err) { showToast("Failed to save attendance", "error"); }
     finally { setSaving(false); }
   };
-
   const loadReport = async () => {
     try { const res = await api.get(`/attendance/report?class_id=${selectedClass}&month=${reportMonth}`); setReportData(res.data.data || []); }
     catch (err) { showToast("Failed to load report", "error"); }
   };
-
   const statusColors = { present: "#16a34a", absent: "#dc2626", late: "#d97706", excused: "#6b7280" };
   const statusBg = { present: "#d1fae5", absent: "#fee2e2", late: "#fef3c7", excused: "#f3f4f6" };
   const summary = { present: students.filter(s => s.status === "present").length, absent: students.filter(s => s.status === "absent").length, late: students.filter(s => s.status === "late").length };
-
   return (
     <div>
       <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "white", borderRadius: 10, padding: 4, boxShadow: "0 2px 8px rgba(0,0,0,0.06)", width: "fit-content" }}>
@@ -974,17 +895,8 @@ function Attendance({ showToast }) {
         <div>
           <div style={{ background: "white", borderRadius: 12, padding: 20, marginBottom: 16, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-              <div>
-                <label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>Select Class</label>
-                <select value={selectedClass} onChange={e => setSelectedClass(e.target.value)} style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 13, fontFamily: "inherit", outline: "none", background: "white" }}>
-                  <option value="">-- Select Class --</option>
-                  {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>Date</label>
-                <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 13, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
-              </div>
+              <div><label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>Select Class</label><select value={selectedClass} onChange={e => setSelectedClass(e.target.value)} style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 13, fontFamily: "inherit", outline: "none", background: "white" }}><option value="">-- Select Class --</option>{classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+              <div><label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>Date</label><input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 13, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} /></div>
             </div>
             {students.length > 0 && (
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -1035,17 +947,8 @@ function Attendance({ showToast }) {
         <div>
           <div style={{ background: "white", borderRadius: 12, padding: 20, marginBottom: 16, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 12, alignItems: "end" }}>
-              <div>
-                <label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>Class</label>
-                <select value={selectedClass} onChange={e => setSelectedClass(e.target.value)} style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 13, fontFamily: "inherit", outline: "none", background: "white" }}>
-                  <option value="">-- All Classes --</option>
-                  {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>Month</label>
-                <input type="month" value={reportMonth} onChange={e => setReportMonth(e.target.value)} style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 13, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
-              </div>
+              <div><label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>Class</label><select value={selectedClass} onChange={e => setSelectedClass(e.target.value)} style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 13, fontFamily: "inherit", outline: "none", background: "white" }}><option value="">-- All Classes --</option>{classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+              <div><label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>Month</label><input type="month" value={reportMonth} onChange={e => setReportMonth(e.target.value)} style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 13, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} /></div>
               <button onClick={loadReport} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "9px 20px", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Load Report</button>
             </div>
           </div>
@@ -1085,14 +988,12 @@ function StaffAccounts({ showToast }) {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "", role: "teacher", phone: "" });
   const [saving, setSaving] = useState(false);
-
   const loadStaff = async () => {
     try { const res = await api.get("/auth/staff"); setStaff(res.data.data || []); }
     catch (err) { showToast("Failed to load staff", "error"); }
     finally { setLoading(false); }
   };
   useEffect(() => { loadStaff(); }, []);
-
   const handleAdd = async () => {
     if (!form.name || !form.email || !form.password) { showToast("Name, email and password are required", "error"); return; }
     setSaving(true);
@@ -1100,7 +1001,6 @@ function StaffAccounts({ showToast }) {
     catch (err) { showToast(err.response?.data?.message || "Failed to create account", "error"); }
     finally { setSaving(false); }
   };
-
   const roleColors = { admin: "#064e3b", principal: "#1d4ed8", teacher: "#7c3aed", bursar: "#d97706" };
   return (
     <div>
@@ -1154,55 +1054,152 @@ function StaffAccounts({ showToast }) {
   );
 }
 
+// ─────────────────────────────────────────────
+// SCHOOL SETTINGS — tabbed
+// ─────────────────────────────────────────────
 function SchoolSettings({ showToast }) {
+  const [activeTab, setActiveTab] = useState("profile");
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 4, marginBottom: 24, background: "white", borderRadius: 10, padding: 4, boxShadow: "0 2px 8px rgba(0,0,0,0.06)", width: "fit-content" }}>
+        <button onClick={() => setActiveTab("profile")} style={{ padding: "8px 20px", borderRadius: 8, border: "none", cursor: "pointer", background: activeTab === "profile" ? "#064e3b" : "transparent", color: activeTab === "profile" ? "white" : "#6b7280", fontSize: 13, fontFamily: "inherit" }}>🏫 School Profile</button>
+        <button onClick={() => setActiveTab("terms")} style={{ padding: "8px 20px", borderRadius: 8, border: "none", cursor: "pointer", background: activeTab === "terms" ? "#064e3b" : "transparent", color: activeTab === "terms" ? "white" : "#6b7280", fontSize: 13, fontFamily: "inherit" }}>📅 Academic Terms</button>
+      </div>
+      {activeTab === "profile" && <SchoolProfileTab showToast={showToast} />}
+      {activeTab === "terms"   && <SchoolTermsTab   showToast={showToast} />}
+    </div>
+  );
+}
+
+function SchoolProfileTab({ showToast }) {
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [preview, setPreview] = useState(null);
+  const [form, setForm] = useState({ school_name: "", motto: "", address: "", phone: "", email: "", website: "", logo: "", principal_name: "", school_type: "Secondary", county: "", nemis_code: "", kra_pin: "" });
+
+  useEffect(() => {
+    api.get("/settings/profile").then(res => {
+      const d = res.data.data || {};
+      setForm({ school_name: d.school_name||"", motto: d.motto||"", address: d.address||"", phone: d.phone||"", email: d.email||"", website: d.website||"", logo: d.logo||"", principal_name: d.principal_name||"", school_type: d.school_type||"Secondary", county: d.county||"", nemis_code: d.nemis_code||"", kra_pin: d.kra_pin||"" });
+      if (d.logo) setPreview(d.logo);
+    }).catch(() => showToast("Failed to load school profile", "error")).finally(() => setLoading(false));
+  }, []);
+
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { showToast("Logo must be under 2 MB", "error"); return; }
+    const reader = new FileReader();
+    reader.onload = (ev) => { setPreview(ev.target.result); setForm(prev => ({ ...prev, logo: ev.target.result })); };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSave = async () => {
+    if (!form.school_name.trim()) { showToast("School name is required", "error"); return; }
+    setSaving(true);
+    try { await api.put("/settings/profile", form); showToast("School profile saved successfully!"); }
+    catch (err) { showToast(err.response?.data?.message || "Failed to save", "error"); }
+    finally { setSaving(false); }
+  };
+
+  if (loading) return <div style={{ textAlign: "center", padding: 40, color: "#9ca3af" }}>Loading...</div>;
+
+  return (
+    <div>
+      <div style={{ background: "linear-gradient(135deg, #064e3b, #065f46)", borderRadius: 12, padding: 24, marginBottom: 24, display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap" }}>
+        <div style={{ position: "relative", flexShrink: 0 }}>
+          <div style={{ width: 96, height: 96, borderRadius: 12, background: "rgba(255,255,255,0.15)", border: "2px dashed rgba(255,255,255,0.4)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+            {preview ? <img src={preview} alt="logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} /> : <div style={{ textAlign: "center", color: "rgba(255,255,255,0.6)", fontSize: 11 }}>🏫<br/>Upload<br/>Logo</div>}
+          </div>
+          <label style={{ position: "absolute", inset: 0, cursor: "pointer" }}>
+            <input type="file" accept="image/png,image/jpeg,image/svg+xml" style={{ display: "none" }} onChange={handleLogoChange} />
+          </label>
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ color: "white", fontSize: 22, fontWeight: "bold" }}>{form.school_name || "Your School Name"}</div>
+          <div style={{ color: "#a7f3d0", fontSize: 13, marginTop: 4, fontStyle: "italic" }}>{form.motto || "Enter your school motto..."}</div>
+          <div style={{ color: "#6ee7b7", fontSize: 12, marginTop: 6 }}>{[form.address, form.phone, form.email].filter(Boolean).join(" · ") || "Address · Phone · Email"}</div>
+        </div>
+        <div style={{ background: "#f59e0b", borderRadius: 8, padding: "6px 14px", fontSize: 11, fontWeight: "bold", color: "#1a1a1a" }}>{form.school_type}</div>
+      </div>
+      <div style={{ marginBottom: 20, padding: "10px 14px", background: "#e0f2fe", borderRadius: 8, border: "1px solid #7dd3fc", fontSize: 12, color: "#0369a1" }}>
+        💡 Click the logo box above to upload your school crest. It will appear on fee receipts, report cards and ID cards. PNG or JPG, under 2 MB.
+      </div>
+      <div style={{ background: "white", borderRadius: 12, padding: 24, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", marginBottom: 20 }}>
+        <h4 style={{ margin: "0 0 20px", color: "#064e3b", fontSize: 14 }}>🏫 Basic Details</h4>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <Field label="School Name *" value={form.school_name} onChange={v => setForm({...form, school_name: v})} placeholder="e.g. Greenfield Academy" />
+          <SelectField label="School Type" value={form.school_type} options={["Primary","Secondary","Mixed","ECDE","College"]} onChange={v => setForm({...form, school_type: v})} />
+          <div style={{ gridColumn: "1/-1" }}><Field label="School Motto" value={form.motto} onChange={v => setForm({...form, motto: v})} placeholder="e.g. Excellence Through Knowledge" /></div>
+          <Field label="Principal / Head Teacher" value={form.principal_name} onChange={v => setForm({...form, principal_name: v})} placeholder="e.g. Mr. John Kamau" />
+          <Field label="County" value={form.county} onChange={v => setForm({...form, county: v})} placeholder="e.g. Nairobi" />
+        </div>
+      </div>
+      <div style={{ background: "white", borderRadius: 12, padding: 24, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", marginBottom: 20 }}>
+        <h4 style={{ margin: "0 0 20px", color: "#064e3b", fontSize: 14 }}>📍 Contact Information</h4>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <Field label="Phone Number" value={form.phone} onChange={v => setForm({...form, phone: v})} placeholder="e.g. 0700 000 000" />
+          <Field label="Email Address" value={form.email} onChange={v => setForm({...form, email: v})} placeholder="e.g. info@school.ac.ke" />
+          <Field label="Website" value={form.website} onChange={v => setForm({...form, website: v})} placeholder="e.g. www.school.ac.ke" />
+          <div style={{ gridColumn: "1/-1" }}>
+            <label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>Physical Address</label>
+            <textarea value={form.address} onChange={e => setForm({...form, address: e.target.value})} placeholder="e.g. P.O. Box 1234-00100, Nairobi" rows={2} style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #d1d5db", fontSize: 12, fontFamily: "inherit", outline: "none", resize: "vertical", boxSizing: "border-box" }} />
+          </div>
+        </div>
+      </div>
+      <div style={{ background: "white", borderRadius: 12, padding: 24, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", marginBottom: 24 }}>
+        <h4 style={{ margin: "0 0 20px", color: "#064e3b", fontSize: 14 }}>📋 Official Registration</h4>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <Field label="NEMIS Code" value={form.nemis_code} onChange={v => setForm({...form, nemis_code: v})} placeholder="e.g. 102345678" />
+          <Field label="KRA PIN" value={form.kra_pin} onChange={v => setForm({...form, kra_pin: v})} placeholder="e.g. P051234567X" />
+        </div>
+      </div>
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <button onClick={handleSave} disabled={saving} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "12px 32px", fontSize: 14, cursor: "pointer", fontFamily: "inherit", fontWeight: "bold" }}>{saving ? "Saving..." : "✓ Save School Profile"}</button>
+      </div>
+    </div>
+  );
+}
+
+function SchoolTermsTab({ showToast }) {
   const [terms, setTerms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [saving, setSaving] = useState(false);
   const [currentTerm, setCurrentTerm] = useState(null);
   const [form, setForm] = useState({ academic_year: String(new Date().getFullYear()), term: "", term_start_date: "", term_end_date: "", has_half_term: false, half_term_start: "", half_term_end: "", is_current: false });
-
   const termOptions = () => { const year = form.academic_year || new Date().getFullYear(); return [`Term 1 ${year}`, `Term 2 ${year}`, `Term 3 ${year}`]; };
-
   const loadData = async () => {
     try {
       const [termsRes, currentRes] = await Promise.all([api.get("/settings/terms"), api.get("/settings/current-term")]);
-      setTerms(termsRes.data.data || []);
-      setCurrentTerm(currentRes.data.data || null);
+      setTerms(termsRes.data.data || []); setCurrentTerm(currentRes.data.data || null);
     } catch (err) { showToast("Failed to load settings", "error"); }
     finally { setLoading(false); }
   };
   useEffect(() => { loadData(); }, []);
-
   const handleSave = async () => {
     if (!form.term || !form.term_start_date || !form.term_end_date) { showToast("Term name, start and end dates are required", "error"); return; }
     if (form.has_half_term && (!form.half_term_start || !form.half_term_end)) { showToast("Please enter half term start and end dates", "error"); return; }
     setSaving(true);
     try {
-      await api.post("/settings/terms", form);
-      showToast("Term saved successfully!");
-      setShowAdd(false);
+      await api.post("/settings/terms", form); showToast("Term saved successfully!"); setShowAdd(false);
       setForm({ academic_year: String(new Date().getFullYear()), term: "", term_start_date: "", term_end_date: "", has_half_term: false, half_term_start: "", half_term_end: "", is_current: false });
       loadData();
     } catch (err) { showToast(err.response?.data?.message || "Failed to save", "error"); }
     finally { setSaving(false); }
   };
-
   const handleSetCurrent = async (id) => {
     try { await api.put(`/settings/terms/${id}/set-current`); showToast("Current term updated!"); loadData(); }
     catch (err) { showToast("Failed to update current term", "error"); }
   };
-
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this term?")) return;
     try { await api.delete(`/settings/terms/${id}`); showToast("Term deleted!"); loadData(); }
     catch (err) { showToast("Failed to delete", "error"); }
   };
-
   const fmt = (d) => d ? new Date(d).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" }) : "—";
   const grouped = {};
   terms.forEach(t => { if (!grouped[t.academic_year]) grouped[t.academic_year] = []; grouped[t.academic_year].push(t); });
-
   return (
     <div>
       {currentTerm && (
@@ -1217,9 +1214,7 @@ function SchoolSettings({ showToast }) {
         </div>
       )}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <div style={{ padding: 14, background: "#e0f2fe", borderRadius: 8, border: "1px solid #7dd3fc", fontSize: 13, color: "#0369a1", flex: 1, marginRight: 16 }}>
-          Set your school term dates including half term breaks. The system auto-detects the current term based on today's date.
-        </div>
+        <div style={{ padding: 14, background: "#e0f2fe", borderRadius: 8, border: "1px solid #7dd3fc", fontSize: 13, color: "#0369a1", flex: 1, marginRight: 16 }}>Set your school term dates including half term breaks. The system auto-detects the current term based on today's date.</div>
         <button onClick={() => setShowAdd(true)} style={{ background: "#064e3b", color: "white", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>+ Add Term</button>
       </div>
       {loading ? <div style={{ textAlign: "center", padding: 40, color: "#9ca3af" }}>Loading...</div> : (
@@ -1282,10 +1277,7 @@ function SchoolSettings({ showToast }) {
           <div style={{ marginTop: 12 }}>
             <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", padding: 12, background: form.has_half_term ? "#fef3c7" : "#f9fafb", borderRadius: 8, border: form.has_half_term ? "1px solid #f59e0b" : "1px solid #e5e7eb" }}>
               <input type="checkbox" checked={form.has_half_term} onChange={e => setForm({...form, has_half_term: e.target.checked, half_term_start: "", half_term_end: ""})} style={{ width: 16, height: 16, cursor: "pointer" }} />
-              <div>
-                <div style={{ fontSize: 13, fontWeight: "bold", color: "#92400e" }}>This term has a half term break</div>
-                <div style={{ fontSize: 11, color: "#6b7280" }}>Term 1 and Term 2 in Kenya usually have one half term break</div>
-              </div>
+              <div><div style={{ fontSize: 13, fontWeight: "bold", color: "#92400e" }}>This term has a half term break</div><div style={{ fontSize: 11, color: "#6b7280" }}>Term 1 and Term 2 in Kenya usually have one half term break</div></div>
             </label>
           </div>
           {form.has_half_term && (
@@ -1300,10 +1292,7 @@ function SchoolSettings({ showToast }) {
           <div style={{ marginTop: 12 }}>
             <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", padding: 12, background: form.is_current ? "#d1fae5" : "#f9fafb", borderRadius: 8, border: form.is_current ? "1px solid #6ee7b7" : "1px solid #e5e7eb" }}>
               <input type="checkbox" checked={form.is_current} onChange={e => setForm({...form, is_current: e.target.checked})} style={{ width: 16, height: 16, cursor: "pointer" }} />
-              <div>
-                <div style={{ fontSize: 13, fontWeight: "bold", color: "#064e3b" }}>Set as current term</div>
-                <div style={{ fontSize: 11, color: "#6b7280" }}>The whole system will use this term for marks, fees and attendance</div>
-              </div>
+              <div><div style={{ fontSize: 13, fontWeight: "bold", color: "#064e3b" }}>Set as current term</div><div style={{ fontSize: 11, color: "#6b7280" }}>The whole system will use this term for marks, fees and attendance</div></div>
             </label>
           </div>
           <div style={{ display: "flex", gap: 10, marginTop: 16, justifyContent: "flex-end" }}>
