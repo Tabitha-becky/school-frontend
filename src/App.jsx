@@ -1359,7 +1359,7 @@ function SelectField({ label, value, options, onChange }) {
       <label style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: "bold" }}>{label}</label>
       <select value={value} onChange={e => onChange(e.target.value)} style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #d1d5db", fontSize: 12, fontFamily: "inherit", outline: "none", background: "white" }}>
         {options.map(o => <option key={o}>{o}</option>)}
-      </select>S
+      </select>
     </div>
   );
 }
